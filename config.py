@@ -41,8 +41,12 @@ class BaseConfig(argparse.Namespace):
 class AugmentConfig(BaseConfig):
     def build_parser(self):
         parser = get_parser("Augment config")
-        parser.add_argument('--name', required=True)
-        parser.add_argument('--dataset', required=True, help='CIFAR10 / MNIST / FashionMNIST')
+        parser.add_argument('--name', default='')
+        parser.add_argument('--dataset', default='CIFAR10', help='CIFAR10 / MNIST / FashionMNIST')
+        parser.add_argument('--data_path', required=False, default='/userhome/data/cifar10',
+                            help='data path')
+        parser.add_argument('--model_method', default='manual',)
+        parser.add_argument('--model_name', default='Resnet18', )
         parser.add_argument('--batch_size', type=int, default=96, help='batch size')
         parser.add_argument('--lr', type=float, default=0.025, help='lr for weights')
         parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
@@ -61,7 +65,7 @@ class AugmentConfig(BaseConfig):
         parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
         parser.add_argument('--drop_path_prob', type=float, default=0.2, help='drop path prob')
 
-        parser.add_argument('--genotype', required=True, help='Cell genotype')
+        parser.add_argument('--genotype', default='', help='Cell genotype')
 
         return parser
 
@@ -70,7 +74,9 @@ class AugmentConfig(BaseConfig):
         args = parser.parse_args()
         super().__init__(**vars(args))
 
-        self.data_path = './data/'
-        self.path = os.path.join('augments', self.name)
-        self.genotype = gt.from_str(self.genotype)
+        self.path = os.path.join('expreiments', self.model_method + '_' + self.model_name)
+        if len(self.genotype) > 1:
+            self.genotype = gt.from_str(self.genotype)
+        else:
+            self.genotype = None
         self.gpus = parse_gpus(self.gpus)

@@ -6,7 +6,9 @@ import numpy as np
 from tensorboardX import SummaryWriter
 from config import AugmentConfig
 import utils
-from models.augment_cnn import AugmentCNN
+from models.darts.augment_cnn import AugmentCNN
+from models import get_model
+from data import get_data
 
 
 config = AugmentConfig()
@@ -35,18 +37,25 @@ def main():
     torch.backends.cudnn.benchmark = True
 
     # get data with meta info
-    input_size, input_channels, n_classes, train_data, valid_data = utils.get_data(
+    input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
         config.dataset, config.data_path, config.cutout_length, validation=True)
 
     criterion = nn.CrossEntropyLoss().to(device)
+
     use_aux = config.aux_weight > 0.
-    model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
-                       use_aux, config.genotype)
+    if config.model_method == 'NAS':
+        if config.genotype is None:
+            config.genotype = get_model.get_model(config.model_method, config.model_name)
+        model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
+                           use_aux, config.genotype)
+    else:
+        model = get_model.get_model(config.model_method, config.model_name)
+    # model size
+    mb_params = utils.netParams(model)
+    logger.info("Model size = {:.3f} MB".format(mb_params))
     model = nn.DataParallel(model, device_ids=config.gpus).to(device)
 
-    # model size
-    mb_params = utils.param_size(model)
-    logger.info("Model size = {:.3f} MB".format(mb_params))
+
 
     # weights optimizer
     optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
@@ -108,10 +117,14 @@ def train(train_loader, model, optimizer, criterion, epoch):
         N = X.size(0)
 
         optimizer.zero_grad()
-        logits, aux_logits = model(X)
-        loss = criterion(logits, y)
+
         if config.aux_weight > 0.:
+            logits, aux_logits = model(X)
+            loss = criterion(logits, y)
             loss += config.aux_weight * criterion(aux_logits, y)
+        else:
+            logits = model(X)
+            loss = criterion(logits, y)
         loss.backward()
         # gradient clipping
         nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
@@ -149,7 +162,10 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
             X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
             N = X.size(0)
 
-            logits, _ = model(X)
+            if config.aux_weight > 0.:
+                logits, _ = model(X)
+            else:
+                logits = model(X)
             loss = criterion(logits, y)
 
             prec1, prec5 = utils.accuracy(logits, y, topk=(1, 5))
