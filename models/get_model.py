@@ -123,7 +123,7 @@ NAS_model_dict = {'MDENAS': MDENAS,
               'DARTS_V1': DARTS_V1,
               'DARTS_V2': DARTS_V2}
 
-Manual_model_dict = {'resnet18': resnet18.ResNet18()}
+Manual_model_dict = {'Resnet18': resnet18.ResNet18()}
 
 
 def get_model(method, name):
@@ -134,6 +134,6 @@ def get_model(method, name):
     else:
         raise NotImplementedError
     if name in model_dict:
-        return model_dict[method]
+        return model_dict[name]
     else:
         raise NotImplementedError

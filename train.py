@@ -19,7 +19,7 @@ device = torch.device("cuda")
 writer = SummaryWriter(log_dir=os.path.join(config.path, "tb"))
 writer.add_text('config', config.as_markdown(), 0)
 
-logger = utils.get_logger(os.path.join(config.path, "{}.log".format(config.name)))
+logger = utils.get_logger(os.path.join(config.path, "logger.log"))
 config.print_params(logger.info)
 
 
@@ -34,7 +34,12 @@ def main():
     torch.manual_seed(config.seed)
     torch.cuda.manual_seed_all(config.seed)
 
-    torch.backends.cudnn.benchmark = True
+    if config.deterministic:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.enabled = True
+    else:
+        torch.backends.cudnn.benchmark = True
 
     # get data with meta info
     input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
@@ -77,8 +82,9 @@ def main():
     # training loop
     for epoch in range(config.epochs):
         lr_scheduler.step()
-        drop_prob = config.drop_path_prob * epoch / config.epochs
-        model.module.drop_path_prob(drop_prob)
+        if config.drop_path_prob > 0:
+            drop_prob = config.drop_path_prob * epoch / config.epochs
+            model.module.drop_path_prob(drop_prob)
 
         # training
         train(train_loader, model, optimizer, criterion, epoch)

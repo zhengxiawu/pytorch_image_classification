@@ -4,6 +4,7 @@ import os
 import models.darts.genotypes as gt
 from functools import partial
 import torch
+import time
 
 
 def get_parser(name):
@@ -61,11 +62,13 @@ class AugmentConfig(BaseConfig):
         parser.add_argument('--layers', type=int, default=20, help='# of layers')
         parser.add_argument('--seed', type=int, default=2, help='random seed')
         parser.add_argument('--workers', type=int, default=4, help='# of workers')
-        parser.add_argument('--aux_weight', type=float, default=0.4, help='auxiliary loss weight')
+        parser.add_argument('--aux_weight', type=float, default=0, help='auxiliary loss weight')
         parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
-        parser.add_argument('--drop_path_prob', type=float, default=0.2, help='drop path prob')
+        # parser.add_argument('--drop_path_prob', type=float, default=0.2, help='drop path prob')
+        parser.add_argument('--drop_path_prob', type=float, default=0, help='drop path prob')
 
         parser.add_argument('--genotype', default='', help='Cell genotype')
+        parser.add_argument('--deterministic', type=bool, default=True, help='momentum')
 
         return parser
 
@@ -73,8 +76,9 @@ class AugmentConfig(BaseConfig):
         parser = self.build_parser()
         args = parser.parse_args()
         super().__init__(**vars(args))
-
-        self.path = os.path.join('expreiments', self.model_method + '_' + self.model_name)
+        time_str = time.asctime(time.localtime()).replace(' ', '_')
+        self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments', self.model_method + '_'
+                                 + self.model_name + '_' + time_str)
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:

@@ -73,7 +73,7 @@ def netParams(model):
             p *= parameter.size(j)
         total_paramters += p
 
-    return total_paramters
+    return total_paramters / 1024. /1024.
 
 
 class AverageMeter(object):
