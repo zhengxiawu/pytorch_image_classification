@@ -3,14 +3,17 @@ import json
 
 import torch
 
-from .utils import download_url
-from .nas_modules import ProxylessNASNets
+from models.proxyless.utils import download_url
+from models.proxyless.nas_modules import ProxylessNASNets
+import pdb
+import os
+project_path = os.getcwd()
 
 
-def proxyless_base(pretrained=False, net_config=None, net_weight=None):
+def proxyless_base(num_classes=10, pretrained=False, net_config=None, net_weight=None):
     assert net_config is not None, "Please input a network config"
-    net_config_path = download_url(net_config)
-    net_config_json = json.load(open(net_config_path, 'r'))
+    net_config_json = json.load(open(net_config, 'r'))
+    net_config_json['classifier']['out_features'] = num_classes
     net = ProxylessNASNets.build_from_config(net_config_json)
 
     if 'bn' in net_config_json:
@@ -31,20 +34,30 @@ def proxyless_base(pretrained=False, net_config=None, net_weight=None):
 
 proxyless_cpu = partial(
     proxyless_base,
-    net_config="https://hanlab.mit.edu/files/proxylessNAS/proxyless_cpu.config",
+    net_config=os.path.join(project_path,
+                            "models/proxyless/network_config/proxyless_cpu.config"),
     net_weight="https://hanlab.mit.edu/files/proxylessNAS/proxyless_cpu.pth")
 
 proxyless_gpu = partial(
     proxyless_base,
-    net_config="https://hanlab.mit.edu/files/proxylessNAS/proxyless_gpu.config",
+    net_config=os.path.join(project_path,
+                            "models/proxyless/network_config/proxyless_gpu.config"),
     net_weight="https://hanlab.mit.edu/files/proxylessNAS/proxyless_gpu.pth")
 
 proxyless_mobile = partial(
     proxyless_base,
-    net_config="https://hanlab.mit.edu/files/proxylessNAS/proxyless_mobile.config",
+    net_config=os.path.join(project_path,
+                            "models/proxyless/network_config/proxyless_mobile.config"),
     net_weight="https://hanlab.mit.edu/files/proxylessNAS/proxyless_mobile.pth")
 
 proxyless_mobile_14 = partial(
     proxyless_base,
-    net_config="https://hanlab.mit.edu/files/proxylessNAS/proxyless_mobile_14.config",
+    net_config=os.path.join(project_path,
+                            "models/proxyless/network_config/proxyless_mobile_14.config"),
     net_weight="https://hanlab.mit.edu/files/proxylessNAS/proxyless_mobile_14.pth")
+
+# if __name__ == '__main__':
+#     print(project_path)
+#
+#     print('hi')
+#     pass

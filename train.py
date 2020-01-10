@@ -48,13 +48,13 @@ def main():
     criterion = nn.CrossEntropyLoss().to(device)
 
     use_aux = config.aux_weight > 0.
-    if config.model_method == 'NAS':
+    if config.model_method == 'darts_NAS':
         if config.genotype is None:
             config.genotype = get_model.get_model(config.model_method, config.model_name)
         model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
                            use_aux, config.genotype)
     else:
-        model = get_model.get_model(config.model_method, config.model_name)
+        model = get_model.get_model(config.model_method, config.model_name, num_classes=n_classes)
     # model size
     mb_params = utils.netParams(model)
     logger.info("Model size = {:.3f} MB".format(mb_params))

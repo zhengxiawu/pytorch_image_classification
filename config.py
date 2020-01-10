@@ -46,8 +46,8 @@ class AugmentConfig(BaseConfig):
         parser.add_argument('--dataset', default='CIFAR10', help='CIFAR10 / MNIST / FashionMNIST')
         parser.add_argument('--data_path', required=False, default='/userhome/data/cifar10',
                             help='data path')
-        parser.add_argument('--model_method', default='manual',)
-        parser.add_argument('--model_name', default='Resnet18', )
+        parser.add_argument('--model_method', default='proxyless_NAS',)
+        parser.add_argument('--model_name', default='proxyless_gpu', )
         parser.add_argument('--batch_size', type=int, default=96, help='batch size')
         parser.add_argument('--lr', type=float, default=0.025, help='lr for weights')
         parser.add_argument('--momentum', type=float, default=0.9, help='momentum')

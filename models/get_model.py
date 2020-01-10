@@ -1,5 +1,6 @@
-from models.manual import resnet18
+from models.manual import resnet
 from collections import namedtuple
+from models.proxyless.model_zoo import proxyless_cpu, proxyless_gpu, proxyless_mobile, proxyless_mobile_14
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 NASNet = Genotype(
     normal=[
@@ -117,23 +118,27 @@ DDPNAS_2 = Genotype(
     ],
     reduce_concat=range(2, 6))
 
-NAS_model_dict = {'MDENAS': MDENAS,
+DARTS_NAS_model_dict = {'MDENAS': MDENAS,
               'DDPNAS_V1': DDPNAS_1,
               'DDPNAS_V2': DDPNAS_2,
               'DARTS_V1': DARTS_V1,
               'DARTS_V2': DARTS_V2}
 
-Manual_model_dict = {'Resnet18': resnet18.ResNet18()}
+Proxyless_NAS_model_dict = {'proxyless_gpu':proxyless_gpu,
+                            'proxyless_cpu':proxyless_cpu,
+                            'proxyless_mobile':proxyless_mobile,
+                            'proxyless_mobile_14':proxyless_mobile_14,
+                            }
+
+Manual_model_dict = {'Resnet18': resnet.ResNet18}
 
 
-def get_model(method, name):
-    if method == 'NAS':
-        model_dict = NAS_model_dict
+def get_model(method, name, num_classes):
+    if method == 'darts_NAS':
+        return DARTS_NAS_model_dict[name]
     elif method == 'manual':
-        model_dict = Manual_model_dict
-    else:
-        raise NotImplementedError
-    if name in model_dict:
-        return model_dict[name]
+        return Manual_model_dict[name](num_classes)
+    elif method == 'proxyless_NAS':
+        return Proxyless_NAS_model_dict[name](num_classes)
     else:
         raise NotImplementedError
