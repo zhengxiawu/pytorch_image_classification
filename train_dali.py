@@ -42,8 +42,8 @@ def main():
         torch.backends.cudnn.benchmark = True
 
     # get data with meta info
-    input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
-        config.dataset, config.data_path, config.cutout_length, validation=True)
+    input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data_dali(
+        config.dataset, config.data_path)
 
     criterion = nn.CrossEntropyLoss().to(device)
 
@@ -63,16 +63,6 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
                                 weight_decay=config.weight_decay)
 
-    train_loader = torch.utils.data.DataLoader(train_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=True,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
-    valid_loader = torch.utils.data.DataLoader(valid_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=False,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, config.epochs)
 
     best_top1 = 0.
@@ -84,11 +74,10 @@ def main():
             model.module.drop_path_prob(drop_prob)
 
         # training
-        train(train_loader, model, optimizer, criterion, epoch)
+        train(train_data, model, optimizer, criterion, epoch)
 
         # validation
-        cur_step = (epoch+1) * len(train_loader)
-        top1 = validate(valid_loader, model, criterion, epoch, cur_step)
+        top1 = validate(valid_data, model, criterion, epoch)
 
         # save
         if best_top1 < top1:
@@ -108,19 +97,17 @@ def train(train_loader, model, optimizer, criterion, epoch):
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
 
-    cur_step = epoch*len(train_loader)
     cur_lr = optimizer.param_groups[0]['lr']
     logger.info("Epoch {} LR {}".format(epoch, cur_lr))
-    writer.add_scalar('train/lr', cur_lr, cur_step)
+    writer.add_scalar('train/lr', cur_lr, epoch)
 
     model.train()
 
-    for step, (X, y) in enumerate(train_loader):
-        X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
+    for step, data in enumerate(train_loader):
+        X = data[0]["data"].cuda(non_blocking=True)
+        y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
         N = X.size(0)
-
         optimizer.zero_grad()
-
         if config.aux_weight > 0.:
             logits, aux_logits = model(X)
             loss = criterion(logits, y)
@@ -138,22 +125,21 @@ def train(train_loader, model, optimizer, criterion, epoch):
         top1.update(prec1.item(), N)
         top5.update(prec5.item(), N)
 
-        if step % config.print_freq == 0 or step == len(train_loader)-1:
+        if step % config.print_freq == 0:
             logger.info(
-                "Train: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
+                "Train: [{:3d}/{}] Step {:03d} Loss {losses.avg:.3f} "
                 "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                    epoch+1, config.epochs, step, len(train_loader)-1, losses=losses,
+                    epoch+1, config.epochs, step, losses=losses,
                     top1=top1, top5=top5))
 
-        writer.add_scalar('train/loss', loss.item(), cur_step)
-        writer.add_scalar('train/top1', prec1.item(), cur_step)
-        writer.add_scalar('train/top5', prec5.item(), cur_step)
-        cur_step += 1
-
+        writer.add_scalar('train/loss', loss.item(), epoch)
+        writer.add_scalar('train/top1', prec1.item(), epoch)
+        writer.add_scalar('train/top5', prec5.item(), epoch)
+    train_loader.reset()
     logger.info("Train: [{:3d}/{}] Final Prec@1 {:.4%}".format(epoch+1, config.epochs, top1.avg))
 
 
-def validate(valid_loader, model, criterion, epoch, cur_step):
+def validate(valid_loader, model, criterion, epoch):
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
@@ -161,8 +147,9 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
     model.eval()
 
     with torch.no_grad():
-        for step, (X, y) in enumerate(valid_loader):
-            X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
+        for step, data in enumerate(valid_loader):
+            X = data[0]["data"].cuda(non_blocking=True)
+            y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
             N = X.size(0)
 
             if config.aux_weight > 0.:
@@ -176,16 +163,16 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
             top1.update(prec1.item(), N)
             top5.update(prec5.item(), N)
 
-            if step % config.print_freq == 0 or step == len(valid_loader)-1:
+            if step % config.print_freq == 0:
                 logger.info(
-                    "Valid: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
+                    "Valid: [{:3d}/{}] Step {:03d} Loss {losses.avg:.3f} "
                     "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                        epoch+1, config.epochs, step, len(valid_loader)-1, losses=losses,
+                        epoch+1, config.epochs, step, losses=losses,
                         top1=top1, top5=top5))
-
-    writer.add_scalar('val/loss', losses.avg, cur_step)
-    writer.add_scalar('val/top1', top1.avg, cur_step)
-    writer.add_scalar('val/top5', top5.avg, cur_step)
+    valid_loader.reset()
+    writer.add_scalar('val/loss', losses.avg, epoch)
+    writer.add_scalar('val/top1', top1.avg, epoch)
+    writer.add_scalar('val/top5', top5.avg, epoch)
 
     logger.info("Valid: [{:3d}/{}] Final Prec@1 {:.4%}".format(epoch+1, config.epochs, top1.avg))
 
@@ -193,4 +180,5 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
 
 
 if __name__ == "__main__":
+
     main()

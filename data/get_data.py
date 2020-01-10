@@ -1,6 +1,7 @@
 import torchvision.datasets as dset
 import data.preproc as preproc
 import os
+from data.dali import cifar10, imagenet
 try:
     from nvidia.dali.plugin.pytorch import DALIClassificationIterator
     from nvidia.dali.pipeline import Pipeline
@@ -54,6 +55,61 @@ def get_data(dataset, data_path, cutout_length, validation):
         else:
             ret.append(dset_cls(root=data_path, train=False, download=True, transform=val_transform))
     return ret
+
+
+def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
+    dataset = dataset.lower()
+    if dataset == 'cifar10':
+        input_size = 32
+        input_channels = 3
+        n_classes = 10
+        train_loader = cifar10.get_cifar_iter_dali(type='train', image_dir=data_path,
+                                                   batch_size=batch_size, num_threads=num_threads)
+        val_loader = cifar10.get_cifar_iter_dali(type='val', image_dir=data_path,
+                                                   batch_size=batch_size, num_threads=num_threads)
+    elif dataset == 'imagenet':
+        input_size = 256
+        input_channels = 3
+        n_classes = 1000
+        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=224, val_size=256)
+        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=256, val_size=256)
+    elif dataset == 'imagenet64':
+        input_size = 64
+        input_channels = 3
+        n_classes = 1000
+        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=64, val_size=64)
+        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
+                                                     batch_size=batch_size, num_threads=4,
+                                                     crop=64, val_size=64)
+    elif dataset == 'imagenet32':
+        input_size = 32
+        input_channels = 3
+        n_classes = 1000
+        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=32, val_size=32)
+        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
+                                                     batch_size=batch_size, num_threads=4,
+                                                     crop=32, val_size=32)
+    elif dataset == 'imagenet16':
+        input_size = 16
+        input_channels = 3
+        n_classes = 1000
+        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=16, val_size=16)
+        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
+                                                     batch_size=batch_size, num_threads=4,
+                                                     crop=16, val_size=16)
+    else:
+        raise NotImplementedError
+    return [input_size, input_channels, n_classes, train_loader, val_loader]
 
 
 class HybridTrainPipe(Pipeline):
