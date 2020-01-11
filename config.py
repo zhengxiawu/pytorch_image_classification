@@ -43,7 +43,7 @@ class AugmentConfig(BaseConfig):
     def build_parser(self):
         parser = get_parser("Augment config")
         parser.add_argument('--name', default='')
-        parser.add_argument('--dataset', default='CIFAR10', help='CIFAR10 / MNIST / FashionMNIST')
+        parser.add_argument('--dataset', default='CIFAR10', help='CIFAR10 / ImageNet64 / FashionMNIST')
         parser.add_argument('--data_path', required=False, default='/userhome/data/cifar10',
                             help='data path')
         parser.add_argument('--model_method', default='proxyless_NAS',)
