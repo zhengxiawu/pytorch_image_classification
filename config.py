@@ -48,8 +48,8 @@ class AugmentConfig(BaseConfig):
                             help='data path')
         parser.add_argument('--model_method', default='proxyless_NAS',)
         parser.add_argument('--model_name', default='proxyless_gpu', )
-        parser.add_argument('--batch_size', type=int, default=96, help='batch size')
-        parser.add_argument('--lr', type=float, default=0.025, help='lr for weights')
+        parser.add_argument('--batch_size', type=int, default=256, help='batch size')
+        parser.add_argument('--lr', type=float, default=0.1, help='lr for weights')
         parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
         parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
         parser.add_argument('--grad_clip', type=float, default=5.,
@@ -57,7 +57,7 @@ class AugmentConfig(BaseConfig):
         parser.add_argument('--print_freq', type=int, default=200, help='print frequency')
         parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                             '`all` indicates use all gpus.')
-        parser.add_argument('--epochs', type=int, default=600, help='# of training epochs')
+        parser.add_argument('--epochs', type=int, default=300, help='# of training epochs')
         parser.add_argument('--init_channels', type=int, default=36)
         parser.add_argument('--layers', type=int, default=20, help='# of layers')
         parser.add_argument('--seed', type=int, default=2, help='random seed')

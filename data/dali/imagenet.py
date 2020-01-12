@@ -6,14 +6,19 @@ import torchvision.datasets as datasets
 from nvidia.dali.pipeline import Pipeline
 import torchvision.transforms as transforms
 from nvidia.dali.plugin.pytorch import DALIClassificationIterator, DALIGenericIterator
+import tqdm
 
 
 class HybridTrainPipe(Pipeline):
-    def __init__(self, batch_size, num_threads, device_id, data_dir, crop, local_rank=0, world_size=1):
+    def __init__(self, batch_size, num_threads, device_id, data_dir, crop, size, local_rank=0, world_size=1):
         super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id)
         dali_device = "gpu"
         self.input = ops.FileReader(file_root=data_dir, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         self.decode = ops.ImageDecoder(device="mixed", output_type=types.RGB)
+        if size < 256:
+            self.resize = ops.Resize(device="gpu", resize_shorter=size, interp_type=types.INTERP_TRIANGULAR)
+        else:
+            self.resize = None
         self.res = ops.RandomResizedCrop(device="gpu", size=crop, random_area=[0.08, 1.25])
         self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                             output_dtype=types.FLOAT,
@@ -28,6 +33,8 @@ class HybridTrainPipe(Pipeline):
         rng = self.coin()
         self.jpegs, self.labels = self.input(name="Reader")
         images = self.decode(self.jpegs)
+        if self.resize is not None:
+            images = self.resize(images)
         images = self.res(images)
         output = self.cmnp(images, mirror=rng)
         return [output, self.labels]
@@ -62,7 +69,7 @@ def get_imagenet_iter_dali(type, image_dir, batch_size, num_threads, crop, val_s
     if type == 'train':
         pip_train = HybridTrainPipe(batch_size=batch_size, num_threads=num_threads, device_id=local_rank,
                                     data_dir=image_dir + '/train',
-                                    crop=crop, world_size=world_size, local_rank=local_rank)
+                                    crop=crop, size=val_size, world_size=world_size, local_rank=local_rank)
         pip_train.build()
         dali_iter_train = DALIClassificationIterator(pip_train, size=pip_train.epoch_size("Reader") // world_size)
         return dali_iter_train
@@ -75,8 +82,8 @@ def get_imagenet_iter_dali(type, image_dir, batch_size, num_threads, crop, val_s
         return dali_iter_val
 
 
-def get_imagenet_iter_torch(type, image_dir, batch_size, num_threads, device_id, num_gpus, crop, val_size=256,
-                            world_size=1, local_rank=0):
+def get_imagenet_iter_torch(type, image_dir, batch_size, num_threads, crop, val_size=256,
+                            ):
     if type == 'train':
         transform = transforms.Compose([
             transforms.RandomResizedCrop(crop, scale=(0.08, 1.25)),
@@ -101,22 +108,24 @@ def get_imagenet_iter_torch(type, image_dir, batch_size, num_threads, device_id,
 
 
 if __name__ == '__main__':
-    train_loader = get_imagenet_iter_dali(type='train', image_dir='/userhome/memory_data/imagenet', batch_size=256,
-                                          num_threads=4, crop=224, device_id=0, num_gpus=1)
+    train_loader = get_imagenet_iter_dali(type='val', image_dir='/userhome/temp_data', batch_size=256,
+                                          num_threads=4, crop=224, val_size=256)
+    # train_loader = get_imagenet_iter_dali(type='val', image_dir='/gdata/ImageNet2012', batch_size=256,
+    #                                       num_threads=4, crop=224, val_size=256)
     print('start iterate')
     start = time.time()
-    for i, data in enumerate(train_loader):
+    for i, data in tqdm.tqdm(enumerate(train_loader)):
         images = data[0]["data"].cuda(non_blocking=True)
         labels = data[0]["label"].squeeze().long().cuda(non_blocking=True)
     end = time.time()
     print('end iterate')
     print('dali iterate time: %fs' % (end - start))
 
-    train_loader = get_imagenet_iter_torch(type='train', image_dir='/userhome/data/imagenet', batch_size=256,
-                                           num_threads=4, crop=224, device_id=0, num_gpus=1)
+    train_loader = get_imagenet_iter_torch(type='val', image_dir='/userhome/temp_data', batch_size=256,
+                                           num_threads=4, crop=224,)
     print('start iterate')
     start = time.time()
-    for i, data in enumerate(train_loader):
+    for i, data in tqdm.tqdm(enumerate(train_loader)):
         images = data[0].cuda(non_blocking=True)
         labels = data[1].cuda(non_blocking=True)
     end = time.time()
