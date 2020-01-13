@@ -27,7 +27,7 @@ def main():
     logger.info("Logger is set - training start")
 
     # set default gpu device id
-    torch.cuda.set_device(config.gpus[0])
+    # torch.cuda.set_device(config.gpus[0])
 
     # set seed
     np.random.seed(config.seed)
@@ -43,7 +43,7 @@ def main():
 
     # get data with meta info
     input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data_dali(
-        config.dataset, config.data_path)
+        config.dataset, config.data_path, batch_size=config.batch_size, num_threads=config.workers)
 
     criterion = nn.CrossEntropyLoss().to(device)
 

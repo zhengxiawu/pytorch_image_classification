@@ -78,7 +78,7 @@ class AugmentConfig(BaseConfig):
         super().__init__(**vars(args))
         time_str = time.asctime(time.localtime()).replace(' ', '_')
         self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments', self.model_method + '_'
-                                 + self.model_name + '_' + time_str)
+                                 + self.model_name + '_' + self.dataset + '_' + time_str)
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:

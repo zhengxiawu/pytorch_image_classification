@@ -124,10 +124,10 @@ DARTS_NAS_model_dict = {'MDENAS': MDENAS,
               'DARTS_V1': DARTS_V1,
               'DARTS_V2': DARTS_V2}
 
-Proxyless_NAS_model_dict = {'proxyless_gpu':proxyless_gpu,
-                            'proxyless_cpu':proxyless_cpu,
-                            'proxyless_mobile':proxyless_mobile,
-                            'proxyless_mobile_14':proxyless_mobile_14,
+Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
+                            'proxyless_cpu': proxyless_cpu,
+                            'proxyless_mobile': proxyless_mobile,
+                            'proxyless_mobile_14': proxyless_mobile_14,
                             }
 
 Manual_model_dict = {'Resnet18': resnet.ResNet18}
