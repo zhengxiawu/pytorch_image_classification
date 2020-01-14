@@ -77,6 +77,16 @@ def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
                                                        batch_size=batch_size, num_threads=4,
                                                        crop=256, val_size=256)
+    elif dataset == 'imagenet112':
+        input_size = 112
+        input_channels = 3
+        n_classes = 1000
+        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
+                                                       batch_size=batch_size, num_threads=4,
+                                                       crop=112, val_size=112)
+        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
+                                                     batch_size=batch_size, num_threads=4,
+                                                     crop=112, val_size=112)
     elif dataset == 'imagenet64':
         input_size = 64
         input_channels = 3
