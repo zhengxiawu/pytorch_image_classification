@@ -2,6 +2,7 @@ import torchvision.datasets as dset
 import data.preproc as preproc
 import os
 from data.dali import cifar10, imagenet
+from data.autoaugment import *
 try:
     from nvidia.dali.plugin.pytorch import DALIClassificationIterator
     from nvidia.dali.pipeline import Pipeline
@@ -11,7 +12,7 @@ except ImportError:
     raise ImportError("Please install DALI from https://www.github.com/NVIDIA/DALI to run this example.")
 
 
-def get_data(dataset, data_path, cutout_length, validation):
+def get_data(dataset, data_path, cutout_length, validation, auto_augmentation):
     """ Get torchvision dataset """
     dataset = dataset.lower()
 
@@ -29,8 +30,7 @@ def get_data(dataset, data_path, cutout_length, validation):
         n_classes = 1000
     else:
         raise ValueError(dataset)
-
-    trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length)
+    trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length, auto_augmentation)
     if dataset == 'imagenet':
         trn_data = dset_cls(root=os.path.join(data_path, 'train'), transform=trn_transform)
     else:

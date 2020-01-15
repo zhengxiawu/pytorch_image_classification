@@ -54,7 +54,8 @@ def main():
         model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
                            use_aux, config.genotype)
     else:
-        model = get_model.get_model(config.model_method, config.model_name, num_classes=n_classes)
+        model_fun = get_model.get_model(config.model_method, config.model_name)
+        model = model_fun(num_classes=n_classes, dropout_rate=config.dropout_rate)
     # model size
     mb_params = utils.netParams(model)
     logger.info("Model size = {:.3f} MB".format(mb_params))

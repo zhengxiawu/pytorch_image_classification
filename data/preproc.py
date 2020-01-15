@@ -28,7 +28,7 @@ class Cutout(object):
         return img
 
 
-def data_transforms(dataset, cutout_length):
+def data_transforms(dataset, cutout_length, auto_augmentation):
     dataset = dataset.lower()
     if dataset == 'cifar10':
         MEAN = [0.49139968, 0.48215827, 0.44653124]
@@ -38,6 +38,8 @@ def data_transforms(dataset, cutout_length):
             transforms.RandomHorizontalFlip(),
             # CIFAR10Policy()
         ]
+        if auto_augmentation:
+            transf.append(CIFAR10Policy)
     elif dataset == 'mnist':
         MEAN = [0.13066051707548254]
         STD = [0.30810780244715075]
@@ -54,16 +56,29 @@ def data_transforms(dataset, cutout_length):
     elif dataset == 'imagenet':
         MEAN = [0.485, 0.456, 0.406]
         STD = [0.229, 0.224, 0.225]
-        transf = [
-            transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            #ImageNetPolicy(),
-            transforms.ColorJitter(
-                brightness=0.4,
-                contrast=0.4,
-                saturation=0.4,
-                hue=0.2),
-        ]
+
+        if auto_augmentation:
+            transf = [
+                transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                ImageNetPolicy(),
+                transforms.ColorJitter(
+                    brightness=0.4,
+                    contrast=0.4,
+                    saturation=0.4,
+                    hue=0.2),
+            ]
+        else:
+            transf = [
+                transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                # ImageNetPolicy(),
+                transforms.ColorJitter(
+                    brightness=0.4,
+                    contrast=0.4,
+                    saturation=0.4,
+                    hue=0.2),
+            ]
     else:
         raise ValueError('not expected dataset = {}'.format(dataset))
 

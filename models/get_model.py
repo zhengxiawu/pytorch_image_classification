@@ -133,12 +133,12 @@ Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
 Manual_model_dict = {'Resnet18': resnet.ResNet18}
 
 
-def get_model(method, name, num_classes):
+def get_model(method, name):
     if method == 'darts_NAS':
         return DARTS_NAS_model_dict[name]
     elif method == 'manual':
-        return Manual_model_dict[name](num_classes)
+        return Manual_model_dict[name]
     elif method == 'proxyless_NAS':
-        return Proxyless_NAS_model_dict[name](num_classes)
+        return Proxyless_NAS_model_dict[name]
     else:
         raise NotImplementedError

@@ -2,6 +2,7 @@
 import torch.nn as nn
 from .augment_cells import AugmentCell
 from . import ops
+from .. import BaseModel
 
 
 class AuxiliaryHead(nn.Module):
@@ -39,10 +40,10 @@ class AuxiliaryHead(nn.Module):
         return logits
 
 
-class AugmentCNN(nn.Module):
+class AugmentCNN(BaseModel.MyNetwork):
     """ Augmented CNN model """
     def __init__(self, input_size, C_in, C, n_classes, n_layers, auxiliary, genotype,
-                 stem_multiplier=3):
+                 stem_multiplier=3, dropout_rate=0.0):
         """
         Args:
             input_size: size of height and width (assuming height = width)
@@ -55,6 +56,7 @@ class AugmentCNN(nn.Module):
         self.n_classes = n_classes
         self.n_layers = n_layers
         self.genotype = genotype
+        self.dropout_rate = dropout_rate
         # aux head position
         self.aux_pos = 2*n_layers//3 if auxiliary else -1
 
@@ -87,6 +89,11 @@ class AugmentCNN(nn.Module):
                 self.aux_head = AuxiliaryHead(input_size//4, C_p, n_classes)
 
         self.gap = nn.AdaptiveAvgPool2d(1)
+        # dropout
+        if self.dropout_rate > 0:
+            self.dropout = nn.Dropout(self.dropout_rate, inplace=True)
+        else:
+            self.dropout = None
         self.linear = nn.Linear(C_p, n_classes)
 
     def forward(self, x):
@@ -100,6 +107,8 @@ class AugmentCNN(nn.Module):
 
         out = self.gap(s1)
         out = out.view(out.size(0), -1) # flatten
+        if self.dropout is not None:
+            out = self.dropout(out)
         logits = self.linear(out)
         return logits, aux_logits
 

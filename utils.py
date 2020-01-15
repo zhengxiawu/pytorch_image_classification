@@ -1,6 +1,8 @@
 import logging
 import os, shutil, torch
 import numpy as np
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 def darts_weight_unpack(weight, n_nodes):
@@ -99,3 +101,41 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+class LabelSmoothLoss(nn.Module):
+
+    def __init__(self, smoothing=0.0):
+        super(LabelSmoothLoss, self).__init__()
+        self.smoothing = smoothing
+
+    def forward(self, input, target):
+        log_prob = F.log_softmax(input, dim=-1)
+        weight = input.new_ones(input.size()) * \
+                 self.smoothing / (input.size(-1) - 1.)
+        weight.scatter_(-1, target.unsqueeze(-1), (1. - self.smoothing))
+        loss = (-weight * log_prob).sum(dim=-1).mean()
+        return loss
+
+
+def group_weight(module):
+    group_decay = []
+    group_no_decay = []
+    for m in module.modules():
+        if isinstance(m, nn.Linear):
+            group_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+        elif isinstance(m, nn.Conv2d):
+            group_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+        elif isinstance(m, _BatchNorm):
+            if m.bias is not None:
+                group_no_decay.append(m.weight)
+            if m.bias is not None:
+                group_no_decay.append(m.bias)
+
+    assert len(list(module.parameters())) == len(group_decay) + len(group_no_decay)
+    groups = [dict(params=group_decay), dict(params=group_no_decay, weight_decay=.0)]
+    return groups

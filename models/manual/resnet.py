@@ -9,6 +9,7 @@ Reference:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from ..BaseModel import MyNetwork
 
 
 class BasicBlock(nn.Module):
@@ -64,7 +65,7 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet(MyNetwork):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
@@ -97,19 +98,19 @@ class ResNet(nn.Module):
         return out
 
 
-def ResNet18(num_classes=10):
+def ResNet18(num_classes=10, dropout_rate = 0.0):
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
 
 
-def ResNet34(num_classes=10):
+def ResNet34(num_classes=10, dropout_rate = 0.0):
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
 
 
-def ResNet50(num_classes=10):
+def ResNet50(num_classes=10, dropout_rate = 0.0):
     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes)
 
 
-def ResNet101(num_classes=10):
+def ResNet101(num_classes=10, dropout_rate = 0.0):
     return ResNet(Bottleneck, [3, 4, 23, 3], num_classes=num_classes)
 
 

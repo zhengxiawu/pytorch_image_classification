@@ -1,17 +1,89 @@
-""" Training augmented model """
+""" Training high accuracy model """
 import os
 import torch
 import torch.nn as nn
 import numpy as np
 from tensorboardX import SummaryWriter
-from config import AugmentConfig
+from config import BaseConfig, get_parser, parse_gpus
+import models.darts.genotypes as gt
+import time
 import utils
 from models.darts.augment_cnn import AugmentCNN
 from models import get_model
 from data import get_data
 
 
-config = AugmentConfig()
+class TrainingConfig(BaseConfig):
+    def build_parser(self):
+        parser = get_parser("Augment config")
+        parser.add_argument('--name', default='')
+        parser.add_argument('--dataset', default='ImageNet', help='CIFAR10 / ImageNet64 / FashionMNIST')
+        parser.add_argument('--data_path', default='/userhome/temp_data/ImageNet',
+                            help='data path')
+        parser.add_argument('--grad_clip', type=float, default=0,
+                            help='gradient clipping for weights')
+        parser.add_argument('--model_method', default='proxyless_NAS',)
+        parser.add_argument('--model_name', default='proxyless_gpu', )
+        parser.add_argument('--model_init', type=str, default='he_fout', choices=['he_fin', 'he_fout'])
+        parser.add_argument('--batch_size', type=int, default=256, help='batch size')
+        parser.add_argument('--lr', type=float, default=0.05, help='lr for weights')
+        parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+        parser.add_argument('--weight_decay', type=float, default=4e-5, help='weight decay')
+        parser.add_argument('--label_smoothing', type=float, default=0.1)
+        parser.add_argument('--no_decay_keys', type=str, default='bn', choices=['None', 'bn', 'bn#bias'])
+
+        parser.add_argument('--print_freq', type=int, default=200, help='print frequency')
+        parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
+                            '`all` indicates use all gpus.')
+        parser.add_argument('--epochs', type=int, default=300, help='# of training epochs')
+        parser.add_argument('--init_channels', type=int, default=36)
+        parser.add_argument('--layers', type=int, default=20, help='# of layers')
+        parser.add_argument('--seed', type=int, default=2, help='random seed')
+        parser.add_argument('--workers', type=int, default=4, help='# of workers')
+        parser.add_argument('--aux_weight', type=float, default=0, help='auxiliary loss weight')
+        parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
+        parser.add_argument('--auto_augmentation',  action='store_true', default=False, help='using autoaugmentation')
+
+        parser.add_argument('--bn_momentum', type=float, default=0.1)
+        parser.add_argument('--bn_eps', type=float, default=1e-3)
+        parser.add_argument('--dropout_rate', type=float, default=0)
+        # parser.add_argument('--drop_path_prob', type=float, default=0.2, help='drop path prob')
+        parser.add_argument('--drop_path_prob', type=float, default=0, help='drop path prob')
+
+        parser.add_argument('--genotype', default='', help='Cell genotype')
+        parser.add_argument('--deterministic', action='store_true', default=False, help='using deterministic model')
+
+        return parser
+
+    def __init__(self):
+        parser = self.build_parser()
+        args = parser.parse_args()
+        super().__init__(**vars(args))
+        time_str = time.asctime(time.localtime()).replace(' ', '_')
+        name_componment = [self.model_method, self.model_name, self.dataset]
+        if self.dropout_rate > 0:
+            name_componment.append('dropout_'+str(self.dropout_rate))
+        if self.auto_augmentation:
+            name_componment.append('auto_augmentation_')
+        if self.label_smoothing > 0:
+            name_componment.append('label_smoothing_' + str(self.label_smoothing))
+        if not self.no_decay_keys == 'None':
+            name_componment.append('no_decay_keys_' + str(self.no_decay_keys))
+        if self.grad_clip > 0:
+            name_componment.append('grad_clip' + str(self.grad_clip))
+        name_str = ''
+        for i in name_componment:
+            name_str += i + '_'
+        name_str += time_str
+        self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments', name_str)
+        if len(self.genotype) > 1:
+            self.genotype = gt.from_str(self.genotype)
+        else:
+            self.genotype = None
+        self.gpus = parse_gpus(self.gpus)
+
+
+config = TrainingConfig()
 
 device = torch.device("cuda")
 
@@ -43,9 +115,14 @@ def main():
 
     # get data with meta info
     input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
-        config.dataset, config.data_path, config.cutout_length, validation=True)
+        config.dataset, config.data_path, config.cutout_length, validation=True,
+        auto_augmentation=config.auto_augmentation)
 
-    criterion = nn.CrossEntropyLoss().to(device)
+    if config.label_smoothing > 0:
+        from utils import LabelSmoothLoss
+        criterion = LabelSmoothLoss(smoothing=config.label_smoothing).to(device)
+    else:
+        criterion = nn.CrossEntropyLoss().to(device)
 
     use_aux = config.aux_weight > 0.
     if config.model_method == 'darts_NAS':
@@ -54,14 +131,26 @@ def main():
         model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
                            use_aux, config.genotype)
     else:
-        model = get_model.get_model(config.model_method, config.model_name, num_classes=n_classes)
+        model_fun = get_model.get_model(config.model_method, config.model_name)
+        model = model_fun(num_classes=n_classes, dropout_rate=config.dropout_rate)
+    # set bn
+    model.set_bn_param(config.bn_momentum, config.bn_eps)
+    # model init
+    model.init_model(model_init=config.model_init)
     # model size
     mb_params = utils.netParams(model)
     logger.info("Model size = {:.3f} MB".format(mb_params))
     model = nn.DataParallel(model, device_ids=config.gpus).to(device)
     # weights optimizer
-    optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
-                                weight_decay=config.weight_decay)
+    if not config.no_decay_keys == 'None':
+        keys = config.no_decay_keys.split('#')
+        optimizer = torch.optim.SGD([
+            {'params': model.module.get_parameters(keys, mode='exclude'), 'weight_decay': config.weight_decay},
+            {'params': model.module.get_parameters(keys, mode='include'), 'weight_decay': 0},
+        ], lr=config.lr, momentum=config.momentum)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
+                                    weight_decay=config.weight_decay)
 
     train_loader = torch.utils.data.DataLoader(train_data,
                                                batch_size=config.batch_size,
@@ -130,7 +219,8 @@ def train(train_loader, model, optimizer, criterion, epoch):
             loss = criterion(logits, y)
         loss.backward()
         # gradient clipping
-        nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
+        if config.grad_clip > 0:
+            nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
         optimizer.step()
 
         prec1, prec5 = utils.accuracy(logits, y, topk=(1, 5))

@@ -1,6 +1,7 @@
 import math
 
 from .layers import *
+from ..BaseModel import MyNetwork
 
 
 class MobileInvertedResidualBlock(BasicUnit):
@@ -51,7 +52,7 @@ class MobileInvertedResidualBlock(BasicUnit):
         return flops1 + flops2, self.forward(x)
 
 
-class ProxylessNASNets(BasicUnit):
+class ProxylessNASNets(MyNetwork):
 
     def __init__(self, first_conv, blocks, feature_mix_layer, classifier):
         super(ProxylessNASNets, self).__init__()

@@ -5,15 +5,16 @@ import torch
 
 from models.proxyless.utils import download_url
 from models.proxyless.nas_modules import ProxylessNASNets
-import pdb
 import os
 project_path = os.getcwd()
 
 
-def proxyless_base(num_classes=10, pretrained=False, net_config=None, net_weight=None):
+def proxyless_base(num_classes=10, pretrained=False, net_config=None, net_weight=None,
+                   dropout_rate=0):
     assert net_config is not None, "Please input a network config"
     net_config_json = json.load(open(net_config, 'r'))
     net_config_json['classifier']['out_features'] = num_classes
+    net_config_json['classifier']['dropout_rate'] = dropout_rate
     net = ProxylessNASNets.build_from_config(net_config_json)
 
     if 'bn' in net_config_json:
