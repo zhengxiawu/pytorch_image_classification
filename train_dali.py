@@ -86,6 +86,7 @@ def main():
         if best_top1 < top1:
             best_top1 = top1
             is_best = True
+            logger.info("Current best Prec@1 = {:.4%}".format(best_top1))
         else:
             is_best = False
         utils.save_checkpoint(model, config.path, is_best)

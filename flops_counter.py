@@ -96,4 +96,4 @@ def profile(model, input_size, custom_ops=None):
     for handler in handler_collection:
         handler.remove()
 
-    return total_ops, total_params
+    return float(total_ops) / 1024. / 1024., float(total_params) / 1024. / 1024.
