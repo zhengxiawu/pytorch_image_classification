@@ -11,6 +11,7 @@ import utils
 from models.darts.augment_cnn import AugmentCNN
 from models import get_model
 from data import get_data
+import flops_counter
 
 
 class TrainingConfig(BaseConfig):
@@ -138,8 +139,9 @@ def main():
     # model init
     model.init_model(model_init=config.model_init)
     # model size
-    mb_params = utils.netParams(model)
-    logger.info("Model size = {:.3f} MB".format(mb_params))
+    total_ops, total_params = flops_counter.profile(model, [1, input_channels, input_size, input_size])
+    logger.info("Model size = {:.3f} MB".format(total_params))
+    logger.info("Model FLOPS = {:.3f} M".format(total_ops))
     model = nn.DataParallel(model, device_ids=config.gpus).to(device)
     # weights optimizer
     if not config.no_decay_keys == 'None':

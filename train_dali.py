@@ -9,6 +9,7 @@ import utils
 from models.darts.augment_cnn import AugmentCNN
 from models import get_model
 from data import get_data
+import flops_counter
 
 
 config = AugmentConfig()
@@ -57,8 +58,9 @@ def main():
         model_fun = get_model.get_model(config.model_method, config.model_name)
         model = model_fun(num_classes=n_classes, dropout_rate=config.dropout_rate)
     # model size
-    mb_params = utils.netParams(model)
-    logger.info("Model size = {:.3f} MB".format(mb_params))
+    total_ops, total_params = flops_counter.profile(model, [1, input_channels, input_size, input_size])
+    logger.info("Model size = {:.3f} MB".format(total_params))
+    logger.info("Model FLOPS = {:.3f} M".format(total_ops))
     model = nn.DataParallel(model, device_ids=config.gpus).to(device)
     # weights optimizer
     optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,

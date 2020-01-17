@@ -1,6 +1,9 @@
 from models.manual import resnet
 from collections import namedtuple
 from models.proxyless.model_zoo import proxyless_cpu, proxyless_gpu, proxyless_mobile, proxyless_mobile_14
+from models.ofa.model_zoo import OFA_595, OFA_482, OFA_398
+from models.ofa.proxyless_nets import MobileNetV2
+from models.ofa.mobilenet_v3 import MobileNetV3Large
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 NASNet = Genotype(
     normal=[
@@ -128,9 +131,15 @@ Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
                             'proxyless_cpu': proxyless_cpu,
                             'proxyless_mobile': proxyless_mobile,
                             'proxyless_mobile_14': proxyless_mobile_14,
+                            'ofa_595': OFA_595,
+                            'ofa_482': OFA_482,
+                            'ofa_398': OFA_398,
                             }
 
-Manual_model_dict = {'Resnet18': resnet.ResNet18}
+Manual_model_dict = {'Resnet18': resnet.ResNet18,
+                     'MobileNetV2': MobileNetV2,
+                     'MobileNetV3Large': MobileNetV3Large
+                     }
 
 
 def get_model(method, name):
