@@ -10,7 +10,7 @@ from sklearn.utils import shuffle
 from torchvision.datasets import CIFAR10
 from nvidia.dali.pipeline import Pipeline
 import torchvision.transforms as transforms
-from nvidia.dali.plugin.pytorch import DALIClassificationIterator, DALIGenericIterator
+from nvidia.dali.plugin.pytorch import DALIClassificationIterator
 
 
 class HybridTrainPipe_CIFAR(Pipeline):
@@ -159,7 +159,7 @@ def get_cifar_iter_dali(type, image_dir, batch_size, num_threads, local_rank=0, 
         return dali_iter_val
 
 
-def get_cifar_iter_torch(type, image_dir, batch_size, num_threads):
+def get_cifar_iter_torch(type, image_dir, batch_size, num_threads, cutout=0):
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
     if type == 'train':

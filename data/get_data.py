@@ -2,7 +2,6 @@ import torchvision.datasets as dset
 import data.preproc as preproc
 import os
 from data.dali import cifar10, imagenet
-from data.autoaugment import *
 try:
     from nvidia.dali.plugin.pytorch import DALIClassificationIterator
     from nvidia.dali.pipeline import Pipeline
@@ -12,7 +11,7 @@ except ImportError:
     raise ImportError("Please install DALI from https://www.github.com/NVIDIA/DALI to run this example.")
 
 
-def get_data(dataset, data_path, cutout_length, validation, auto_augmentation):
+def get_data(dataset, data_path, cutout_length, auto_augmentation):
     """ Get torchvision dataset """
     dataset = dataset.lower()
 
@@ -25,35 +24,41 @@ def get_data(dataset, data_path, cutout_length, validation, auto_augmentation):
     elif dataset == 'fashionmnist':
         dset_cls = dset.FashionMNIST
         n_classes = 10
-    elif dataset == 'imagenet':
+    elif 'imagenet' in dataset:
         dset_cls = dset.ImageFolder
         n_classes = 1000
     else:
         raise ValueError(dataset)
     trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length, auto_augmentation)
-    if dataset == 'imagenet':
+    if 'imagenet' in dataset:
         trn_data = dset_cls(root=os.path.join(data_path, 'train'), transform=trn_transform)
     else:
         trn_data = dset_cls(root=data_path, train=True, download=True, transform=trn_transform)
 
     # assuming shape is NHW or NHWC
-    if dataset == 'imagenet':
-        shape = (len(trn_data.imgs), 224, 224, 3)
+    if 'imagenet' in dataset:
+        if dataset == 'imagenet':
+            shape = (len(trn_data.imgs), 224, 224, 3)
+        elif dataset == 'imagenet112':
+            shape = (len(trn_data.imgs), 112, 112, 3)
+        elif dataset == 'imagenet56':
+            shape = (len(trn_data.imgs), 56, 56, 3)
+        else:
+            raise NotImplementedError
     else:
         if hasattr(trn_data, 'data'):
             shape = trn_data.data.shape
         else:
             shape = trn_data.train_data.shape
+
     input_channels = 3 if len(shape) == 4 else 1
     assert shape[1] == shape[2], "not expected shape = {}".format(shape)
     input_size = shape[1]
-
     ret = [input_size, input_channels, n_classes, trn_data]
-    if validation:  # append validation data
-        if dataset == 'imagenet':
-            ret.append(dset_cls(root=os.path.join(data_path,'val'), transform=val_transform))
-        else:
-            ret.append(dset_cls(root=data_path, train=False, download=True, transform=val_transform))
+    if 'imagenet' in dataset:
+        ret.append(dset_cls(root=os.path.join(data_path, 'val'), transform=val_transform))
+    else:
+        ret.append(dset_cls(root=data_path, train=False, download=True, transform=val_transform))
     return ret
 
 
@@ -68,55 +73,45 @@ def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
         val_loader = cifar10.get_cifar_iter_dali(type='val', image_dir=data_path,
                                                    batch_size=batch_size, num_threads=num_threads)
     elif dataset == 'imagenet':
-        input_size = 256
+        input_size = 224
         input_channels = 3
         n_classes = 1000
         train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
+                                                       batch_size=batch_size, num_threads=num_threads,
                                                        crop=224, val_size=256)
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
-                                                       crop=256, val_size=256)
+                                                       batch_size=batch_size, num_threads=num_threads,
+                                                       crop=224, val_size=256)
     elif dataset == 'imagenet112':
         input_size = 112
         input_channels = 3
         n_classes = 1000
         train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
-                                                       crop=112, val_size=112)
+                                                       batch_size=batch_size, num_threads=num_threads,
+                                                       crop=112, val_size=128)
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                     batch_size=batch_size, num_threads=4,
-                                                     crop=112, val_size=112)
-    elif dataset == 'imagenet64':
-        input_size = 64
+                                                     batch_size=batch_size, num_threads=num_threads,
+                                                     crop=112, val_size=128)
+    elif dataset == 'imagenet56':
+        input_size = 56
         input_channels = 3
         n_classes = 1000
         train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
-                                                       crop=64, val_size=64)
+                                                       batch_size=batch_size, num_threads=num_threads,
+                                                       crop=56, val_size=64)
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                     batch_size=batch_size, num_threads=4,
-                                                     crop=64, val_size=64)
-    elif dataset == 'imagenet32':
-        input_size = 32
+                                                     batch_size=batch_size, num_threads=num_threads,
+                                                     crop=56, val_size=64)
+    elif dataset == 'imagenet28':
+        input_size = 28
         input_channels = 3
         n_classes = 1000
         train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
-                                                       crop=32, val_size=32)
+                                                       batch_size=batch_size, num_threads=num_threads,
+                                                       crop=input_size, val_size=32)
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                     batch_size=batch_size, num_threads=4,
-                                                     crop=32, val_size=32)
-    elif dataset == 'imagenet16':
-        input_size = 16
-        input_channels = 3
-        n_classes = 1000
-        train_loader = imagenet.get_imagenet_iter_dali(type='train', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=4,
-                                                       crop=16, val_size=16)
-        val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                     batch_size=batch_size, num_threads=4,
-                                                     crop=16, val_size=16)
+                                                     batch_size=batch_size, num_threads=num_threads,
+                                                     crop=input_size, val_size=32)
     else:
         raise NotImplementedError
     return [input_size, input_channels, n_classes, train_loader, val_loader]

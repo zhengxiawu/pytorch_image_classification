@@ -18,9 +18,11 @@ class TrainingConfig(BaseConfig):
     def build_parser(self):
         parser = get_parser("Augment config")
         parser.add_argument('--name', default='')
-        parser.add_argument('--dataset', default='ImageNet', help='CIFAR10 / ImageNet64 / FashionMNIST')
+        parser.add_argument('--dataset', default='ImageNet', help='imagenet / ImageNet56 / ImageNet112 / cifar10')
         parser.add_argument('--data_path', default='/userhome/temp_data/ImageNet',
                             help='data path')
+        parser.add_argument('--data_loader_type', default='torch',
+                            help='torch/dali')
         parser.add_argument('--grad_clip', type=float, default=0,
                             help='gradient clipping for weights')
         parser.add_argument('--model_method', default='proxyless_NAS',)
@@ -40,9 +42,9 @@ class TrainingConfig(BaseConfig):
         parser.add_argument('--init_channels', type=int, default=36)
         parser.add_argument('--layers', type=int, default=20, help='# of layers')
         parser.add_argument('--seed', type=int, default=2, help='random seed')
-        parser.add_argument('--workers', type=int, default=4, help='# of workers')
+        parser.add_argument('--workers', type=int, default=32, help='# of workers')
         parser.add_argument('--aux_weight', type=float, default=0, help='auxiliary loss weight')
-        parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
+        parser.add_argument('--cutout_length', type=int, default=0, help='cutout length')
         parser.add_argument('--auto_augmentation',  action='store_true', default=False, help='using autoaugmentation')
 
         parser.add_argument('--bn_momentum', type=float, default=0.1)
@@ -60,28 +62,48 @@ class TrainingConfig(BaseConfig):
         parser = self.build_parser()
         args = parser.parse_args()
         super().__init__(**vars(args))
+        if not self.model_method == 'darts':
+            if self.aux_weight > 0 or self.drop_path_prob > 0:
+                print("aux head and drop path only support for daats search space!")
+                exit()
+
         time_str = time.asctime(time.localtime()).replace(' ', '_')
-        name_componment = [self.model_method, self.model_name, self.dataset]
+        name_componment = [self.model_method, self.model_name,
+                           self.data_loader_type, 'epoch_' + self.epochs]
+        if not self.model_method == 'darts':
+            name_componment += ['channels_' + self.init_channels, 'layers_' + self.layers,
+                                'aux_weight_' + self.aux_weight, 'drop_path_prob_' + self.drop_path_prob]
+            if self.auto_augmentation or self.cutout_length > 0:
+                print("DALI do not support Augmentation and Cutout!")
+                exit()
         if self.dropout_rate > 0:
             name_componment.append('dropout_'+str(self.dropout_rate))
         if self.auto_augmentation:
             name_componment.append('auto_augmentation_')
         if self.label_smoothing > 0:
             name_componment.append('label_smoothing_' + str(self.label_smoothing))
+
         if not self.no_decay_keys == 'None':
             name_componment.append('no_decay_keys_' + str(self.no_decay_keys))
-        if self.grad_clip > 0:
-            name_componment.append('grad_clip' + str(self.grad_clip))
         name_str = ''
         for i in name_componment:
             name_str += i + '_'
         name_str += time_str
-        self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments', name_str)
+        self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments',
+                                 self.dataset, name_str)
+
+
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:
             self.genotype = None
         self.gpus = parse_gpus(self.gpus)
+
+
+def get_iterator_length(data_loader):
+    _size = len(data_loader) if isinstance(data_loader, torch.utils.data.DataLoader) \
+        else int(data_loader._size / data_loader.batch_size + 1)
+    return _size
 
 
 config = TrainingConfig()
@@ -115,9 +137,27 @@ def main():
         torch.backends.cudnn.benchmark = True
 
     # get data with meta info
-    input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
-        config.dataset, config.data_path, config.cutout_length, validation=True,
-        auto_augmentation=config.auto_augmentation)
+    if config.data_loader_type == 'torch':
+        input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data(
+            config.dataset, config.data_path, config.cutout_length,
+            auto_augmentation=config.auto_augmentation)
+        train_loader = torch.utils.data.DataLoader(train_data,
+                                                   batch_size=config.batch_size,
+                                                   shuffle=True,
+                                                   num_workers=config.workers,
+                                                   pin_memory=True)
+        valid_loader = torch.utils.data.DataLoader(valid_data,
+                                                   batch_size=config.batch_size,
+                                                   shuffle=False,
+                                                   num_workers=config.workers,
+                                                   pin_memory=True)
+    elif config.data_loader_type == 'dali':
+        input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data_dali(
+            config.dataset, config.data_path, batch_size=config.batch_size, num_threads=config.workers)
+        train_loader = train_data
+        valid_loader = valid_data
+    else:
+        raise NotImplementedError
 
     if config.label_smoothing > 0:
         from utils import LabelSmoothLoss
@@ -154,20 +194,11 @@ def main():
         optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
                                     weight_decay=config.weight_decay)
 
-    train_loader = torch.utils.data.DataLoader(train_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=True,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
-    valid_loader = torch.utils.data.DataLoader(valid_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=False,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, config.epochs)
 
     best_top1 = 0.
     # training loop
+    _size = get_iterator_length(train_loader)
     for epoch in range(config.epochs):
         lr_scheduler.step()
         if config.drop_path_prob > 0:
@@ -178,7 +209,7 @@ def main():
         train(train_loader, model, optimizer, criterion, epoch)
 
         # validation
-        cur_step = (epoch+1) * len(train_loader)
+        cur_step = (epoch+1) * _size
         top1 = validate(valid_loader, model, criterion, epoch, cur_step)
 
         # save
@@ -200,15 +231,20 @@ def train(train_loader, model, optimizer, criterion, epoch):
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
 
-    cur_step = epoch*len(train_loader)
+    _size = get_iterator_length(train_loader)
+    cur_step = epoch * _size
     cur_lr = optimizer.param_groups[0]['lr']
     logger.info("Epoch {} LR {}".format(epoch, cur_lr))
     writer.add_scalar('train/lr', cur_lr, cur_step)
 
     model.train()
 
-    for step, (X, y) in enumerate(train_loader):
-        X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
+    for step, data in enumerate(train_loader):
+        if isinstance(train_loader, torch.utils.data.DataLoader):
+            X, y = data[0].cuda(non_blocking=True), data[1].to(device, non_blocking=True)
+        else:
+            X = data[0]["data"].cuda(non_blocking=True)
+            y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
         N = X.size(0)
 
         optimizer.zero_grad()
@@ -231,18 +267,19 @@ def train(train_loader, model, optimizer, criterion, epoch):
         top1.update(prec1.item(), N)
         top5.update(prec5.item(), N)
 
-        if step % config.print_freq == 0 or step == len(train_loader)-1:
+        if step % config.print_freq == 0 or step == _size-1:
             logger.info(
                 "Train: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
                 "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                    epoch+1, config.epochs, step, len(train_loader)-1, losses=losses,
+                    epoch+1, config.epochs, step, _size-1, losses=losses,
                     top1=top1, top5=top5))
 
         writer.add_scalar('train/loss', loss.item(), cur_step)
         writer.add_scalar('train/top1', prec1.item(), cur_step)
         writer.add_scalar('train/top5', prec5.item(), cur_step)
         cur_step += 1
-
+    if not isinstance(train_loader, torch.utils.data.DataLoader):
+        train_loader.reset()
     logger.info("Train: [{:3d}/{}] Final Prec@1 {:.4%}".format(epoch+1, config.epochs, top1.avg))
 
 
@@ -252,10 +289,15 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
     losses = utils.AverageMeter()
 
     model.eval()
+    _size = get_iterator_length(valid_loader)
 
     with torch.no_grad():
-        for step, (X, y) in enumerate(valid_loader):
-            X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
+        for step, data in enumerate(valid_loader):
+            if isinstance(valid_loader, torch.utils.data.DataLoader):
+                X, y = data[0].cuda(non_blocking=True), data[1].to(device, non_blocking=True)
+            else:
+                X = data[0]["data"].cuda(non_blocking=True)
+                y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
             N = X.size(0)
 
             if config.aux_weight > 0.:
@@ -269,16 +311,18 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
             top1.update(prec1.item(), N)
             top5.update(prec5.item(), N)
 
-            if step % config.print_freq == 0 or step == len(valid_loader)-1:
+            if step % config.print_freq == 0 or step == _size-1:
                 logger.info(
                     "Valid: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
                     "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                        epoch+1, config.epochs, step, len(valid_loader)-1, losses=losses,
+                        epoch+1, config.epochs, step, _size-1, losses=losses,
                         top1=top1, top5=top5))
 
     writer.add_scalar('val/loss', losses.avg, cur_step)
     writer.add_scalar('val/top1', top1.avg, cur_step)
     writer.add_scalar('val/top5', top5.avg, cur_step)
+    if not isinstance(valid_loader, torch.utils.data.DataLoader):
+        valid_loader.reset()
 
     logger.info("Valid: [{:3d}/{}] Final Prec@1 {:.4%}".format(epoch+1, config.epochs, top1.avg))
 
