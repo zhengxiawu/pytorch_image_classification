@@ -40,7 +40,7 @@ def data_transforms(dataset, cutout_length, auto_augmentation):
             # CIFAR10Policy()
         ]
         if auto_augmentation:
-            transf.append(CIFAR10Policy)
+            transf.append(CIFAR10Policy())
     elif dataset == 'mnist':
         MEAN = [0.13066051707548254]
         STD = [0.30810780244715075]

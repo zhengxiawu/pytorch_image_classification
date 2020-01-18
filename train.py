@@ -42,7 +42,7 @@ class TrainingConfig(BaseConfig):
         parser.add_argument('--init_channels', type=int, default=36)
         parser.add_argument('--layers', type=int, default=20, help='# of layers')
         parser.add_argument('--seed', type=int, default=2, help='random seed')
-        parser.add_argument('--workers', type=int, default=32, help='# of workers')
+        parser.add_argument('--workers', type=int, default=12, help='# of workers')
         parser.add_argument('--aux_weight', type=float, default=0, help='auxiliary loss weight')
         parser.add_argument('--cutout_length', type=int, default=0, help='cutout length')
         parser.add_argument('--auto_augmentation',  action='store_true', default=False, help='using autoaugmentation')
@@ -62,19 +62,21 @@ class TrainingConfig(BaseConfig):
         parser = self.build_parser()
         args = parser.parse_args()
         super().__init__(**vars(args))
+        if self.data_loader_type == 'dali':
+            if self.auto_augmentation or self.cutout_length > 0:
+                print("DALI do not support Augmentation and Cutout!")
+                exit()
+
+        time_str = time.asctime(time.localtime()).replace(' ', '_')
+        name_componment = [self.data_loader_type, 'epoch_' + str(self.epochs)]
         if not self.model_method == 'darts_NAS':
             if self.aux_weight > 0 or self.drop_path_prob > 0:
                 print("aux head and drop path only support for daats search space!")
                 exit()
-
-        time_str = time.asctime(time.localtime()).replace(' ', '_')
-        name_componment = [self.dataset, self.data_loader_type, 'epoch_' + str(self.epochs)]
-        if not self.model_method == 'darts_NAS':
+        else:
             name_componment += ['channels_' + str(self.init_channels), 'layers_' + str(self.layers),
                                 'aux_weight_' + str(self.aux_weight), 'drop_path_prob_' + str(self.drop_path_prob)]
-            if self.auto_augmentation or self.cutout_length > 0:
-                print("DALI do not support Augmentation and Cutout!")
-                exit()
+
         if self.dropout_rate > 0:
             name_componment.append('dropout_'+str(self.dropout_rate))
         if self.auto_augmentation:
@@ -89,7 +91,7 @@ class TrainingConfig(BaseConfig):
             name_str += i + '_'
         name_str += time_str
         self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments',
-                                 self.model_method, self.model_name, name_str)
+                                 self.model_method, self.model_name, self.dataset, name_str)
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:

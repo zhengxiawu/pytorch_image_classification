@@ -42,6 +42,12 @@ python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data
 
 
 # Training with cifar10 Torch on different neural networks for high performance 
+
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name MobileNetV2 
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name MobileNetV3Large 
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name Resnet18 
+
+
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name proxyless_gpu 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name proxyless_cpu 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name proxyless_mobile 
@@ -50,19 +56,24 @@ python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name ofa_482 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name ofa_398 
 
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name MDENAS
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V1
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V2
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V1
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V2
+
+
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name MDENAS
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V1 
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V2
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V1
+python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V2
+
 # Training with ImageNet torch on different neural networks
-python train.py --dataset ImageNet --data_path /gdata/ImageNet2012 --data_loader_type dali --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 48 --layers 14 --epochs 250 --model_method darts_NAS --model_name MDENAS
-python train.py --dataset ImageNet --data_path /gdata/ImageNet2012 --data_loader_type dali --model_method proxyless_NAS --model_name proxyless_gpu 
 
-python train.py --dataset ImageNet --data_path /userhome/temp_data/cifar10 --model_method proxyless_NAS --model_name proxyless_gpu
+python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type dali --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 48 --layers 14 --epochs 300 --model_method darts_NAS --model_name MDENAS
+python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type dali --model_method proxyless_NAS --model_name proxyless_gpu 
 
-python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --model_method manual --model_name MobileNetV2
-
-```
-```bash
-# High performance Training
-nvidia-smi; 
-cd /userhome/project/pytorch_image_classification; 
-./script/data_to_memory.sh imagenet;
-python train.py --auto_augmentation --dropout_rate 0.2 --data_path /userhome/temp_data/ImageNet --workers 16 --model_method proxyless_NAS --model_name ofa_398 
+python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type torch --epochs 300 --auto_augmentation --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 48 --layers 14 --model_method darts_NAS --model_name MDENAS
+python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type torch --epochs 300 --auto_augmentation  --model_method proxyless_NAS --model_name proxyless_gpu 
 ```
