@@ -50,9 +50,9 @@ python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name ofa_482 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name ofa_398 
 
-# Training with cifar10 torch on different neural networks
-
-
+# Training with ImageNet torch on different neural networks
+python train.py --dataset ImageNet --data_path /gdata/ImageNet2012 --data_loader_type dali --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 48 --layers 14 --epochs 250 --model_method darts_NAS --model_name MDENAS
+python train.py --dataset ImageNet --data_path /gdata/ImageNet2012 --data_loader_type dali --model_method proxyless_NAS --model_name proxyless_gpu 
 
 python train.py --dataset ImageNet --data_path /userhome/temp_data/cifar10 --model_method proxyless_NAS --model_name proxyless_gpu
 

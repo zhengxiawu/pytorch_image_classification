@@ -8,7 +8,7 @@ from config import BaseConfig, get_parser, parse_gpus
 import models.darts.genotypes as gt
 import time
 import utils
-from models.darts.augment_cnn import AugmentCNN
+from models.darts.augment_cnn import AugmentCNN, AugmentCNN_ImageNet
 from models import get_model
 from data import get_data
 import flops_counter
@@ -62,17 +62,16 @@ class TrainingConfig(BaseConfig):
         parser = self.build_parser()
         args = parser.parse_args()
         super().__init__(**vars(args))
-        if not self.model_method == 'darts':
+        if not self.model_method == 'darts_NAS':
             if self.aux_weight > 0 or self.drop_path_prob > 0:
                 print("aux head and drop path only support for daats search space!")
                 exit()
 
         time_str = time.asctime(time.localtime()).replace(' ', '_')
-        name_componment = [self.model_method, self.model_name,
-                           self.data_loader_type, 'epoch_' + self.epochs]
-        if not self.model_method == 'darts':
-            name_componment += ['channels_' + self.init_channels, 'layers_' + self.layers,
-                                'aux_weight_' + self.aux_weight, 'drop_path_prob_' + self.drop_path_prob]
+        name_componment = [self.dataset, self.data_loader_type, 'epoch_' + str(self.epochs)]
+        if not self.model_method == 'darts_NAS':
+            name_componment += ['channels_' + str(self.init_channels), 'layers_' + str(self.layers),
+                                'aux_weight_' + str(self.aux_weight), 'drop_path_prob_' + str(self.drop_path_prob)]
             if self.auto_augmentation or self.cutout_length > 0:
                 print("DALI do not support Augmentation and Cutout!")
                 exit()
@@ -90,9 +89,7 @@ class TrainingConfig(BaseConfig):
             name_str += i + '_'
         name_str += time_str
         self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments',
-                                 self.dataset, name_str)
-
-
+                                 self.model_method, self.model_name, name_str)
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:
@@ -169,8 +166,12 @@ def main():
     if config.model_method == 'darts_NAS':
         if config.genotype is None:
             config.genotype = get_model.get_model(config.model_method, config.model_name)
-        model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
+        if 'imagenet' in config.dataset.lower():
+            model = AugmentCNN_ImageNet(input_size, input_channels, config.init_channels, n_classes, config.layers,
                            use_aux, config.genotype)
+        else:
+            model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
+                               use_aux, config.genotype)
     else:
         model_fun = get_model.get_model(config.model_method, config.model_name)
         model = model_fun(num_classes=n_classes, dropout_rate=config.dropout_rate)
@@ -178,6 +179,7 @@ def main():
     model.set_bn_param(config.bn_momentum, config.bn_eps)
     # model init
     model.init_model(model_init=config.model_init)
+    model.cuda()
     # model size
     total_ops, total_params = flops_counter.profile(model, [1, input_channels, input_size, input_size])
     logger.info("Model size = {:.3f} MB".format(total_params))

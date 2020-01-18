@@ -117,3 +117,88 @@ class AugmentCNN(BaseModel.MyNetwork):
         for module in self.modules():
             if isinstance(module, ops.DropPath_):
                 module.p = p
+
+
+class AugmentCNN_ImageNet(BaseModel.MyNetwork):
+    """ Augmented CNN model """
+    def __init__(self, input_size, C_in, C, n_classes, n_layers, auxiliary, genotype,
+                 stem_multiplier=3, dropout_rate=0.0):
+        """
+        Args:
+            input_size: size of height and width (assuming height = width)
+            C_in: # of input channels
+            C: # of starting model channels
+        """
+        super().__init__()
+        self.C_in = C_in
+        self.C = C
+        self.n_classes = n_classes
+        self.n_layers = n_layers
+        self.genotype = genotype
+        self.dropout_rate = dropout_rate
+        # aux head position
+        self.aux_pos = 2*n_layers//3 if auxiliary else -1
+
+        self.stem0 = nn.Sequential(
+            nn.Conv2d(C_in, C // 2, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(C // 2),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(C // 2, C, 3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(C),
+        )
+        self.stem1 = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Conv2d(C, C, 3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(C),
+        )
+
+        C_prev_prev, C_prev, C_curr = C, C, C
+
+        self.cells = nn.ModuleList()
+        reduction_prev = True
+        for i in range(n_layers):
+            if i in [n_layers//3, 2*n_layers//3]:
+                C_curr *= 2
+                reduction = True
+            else:
+                reduction = False
+
+            cell = AugmentCell(genotype, C_prev_prev, C_prev, C_curr, reduction_prev, reduction)
+            reduction_prev = reduction
+            self.cells.append(cell)
+            C_prev_prev, C_prev = C_prev, len(cell.concat) * C_curr
+
+            if i == self.aux_pos:
+                # [!] this auxiliary head is ignored in computing parameter size
+                #     by the name 'aux_head'
+                self.aux_head = AuxiliaryHead(input_size//4, C_prev, n_classes)
+
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        # dropout
+        if self.dropout_rate > 0:
+            self.dropout = nn.Dropout(self.dropout_rate, inplace=True)
+        else:
+            self.dropout = None
+        self.linear = nn.Linear(C_prev, n_classes)
+
+    def forward(self, x):
+        s0 = self.stem0(x)
+        s1 = self.stem1(s0)
+        aux_logits = None
+        for i, cell in enumerate(self.cells):
+            s0, s1 = s1, cell(s0, s1)
+            if i == self.aux_pos and self.training:
+                aux_logits = self.aux_head(s1)
+
+        out = self.gap(s1)
+        out = out.view(out.size(0), -1) # flatten
+        if self.dropout is not None:
+            out = self.dropout(out)
+        logits = self.linear(out)
+        return logits, aux_logits
+
+    def drop_path_prob(self, p):
+        """ Set drop path probability """
+        for module in self.modules():
+            if isinstance(module, ops.DropPath_):
+                module.p = p
