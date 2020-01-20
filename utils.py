@@ -117,3 +117,4 @@ class LabelSmoothLoss(nn.Module):
         loss = (-weight * log_prob).sum(dim=-1).mean()
         return loss
 
+

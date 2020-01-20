@@ -49,6 +49,7 @@ class TrainingConfig(BaseConfig):
 
         parser.add_argument('--bn_momentum', type=float, default=0.1)
         parser.add_argument('--bn_eps', type=float, default=1e-3)
+        parser.add_argument('--sync_bn', action='store_true', default=False, help='using sync_bn model')
         parser.add_argument('--dropout_rate', type=float, default=0)
         # parser.add_argument('--drop_path_prob', type=float, default=0.2, help='drop path prob')
         parser.add_argument('--drop_path_prob', type=float, default=0, help='drop path prob')
@@ -121,7 +122,7 @@ def main():
     logger.info("Logger is set - training start")
 
     # set default gpu device id
-    torch.cuda.set_device(config.gpus[0])
+    # torch.cuda.set_device(config.gpus[0])
 
     # set seed
     np.random.seed(config.seed)
@@ -186,7 +187,7 @@ def main():
     total_ops, total_params = flops_counter.profile(model, [1, input_channels, input_size, input_size])
     logger.info("Model size = {:.3f} MB".format(total_params))
     logger.info("Model FLOPS = {:.3f} M".format(total_ops))
-    model = nn.DataParallel(model, device_ids=config.gpus).to(device)
+    model = nn.DataParallel(model).to(device)
     # weights optimizer
     if not config.no_decay_keys == 'None':
         keys = config.no_decay_keys.split('#')
