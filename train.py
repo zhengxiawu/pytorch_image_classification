@@ -186,7 +186,11 @@ def main():
     # model size
     total_ops, total_params = flops_counter.profile(model, [1, input_channels, input_size, input_size])
     logger.info("Model size = {:.3f} MB".format(total_params))
-    logger.info("Model FLOPS = {:.3f} M".format(total_ops))
+    logger.info("Model FLOPS with input {} = {:.3f} M".format(str([1, input_channels, input_size, input_size]),
+                                                              total_ops))
+    total_ops, total_params = flops_counter.profile(model, [1, 3, 224, 224])
+    logger.info("Model FLOPS with input [1,3,224,224] {:.3f} M".format(total_ops))
+
     model = nn.DataParallel(model).to(device)
     # weights optimizer
     if not config.no_decay_keys == 'None':

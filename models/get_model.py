@@ -4,6 +4,7 @@ from models.proxyless.model_zoo import proxyless_cpu, proxyless_gpu, proxyless_m
 from models.ofa.model_zoo import OFA_595, OFA_482, OFA_398
 from models.ofa.proxyless_nets import MobileNetV2
 from models.ofa.mobilenet_v3 import MobileNetV3Large
+from models.my_searched_model import MY_600, MY_500, MY_400
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 NASNet = Genotype(
     normal=[
@@ -136,6 +137,11 @@ Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
                             'ofa_398': OFA_398,
                             }
 
+My_model_dict = {'my_600': MY_600,
+                 'my_500': MY_500,
+                 'my_400': MY_400,
+                 }
+
 Manual_model_dict = {'Resnet18': resnet.ResNet18,
                      'MobileNetV2': MobileNetV2,
                      'MobileNetV3Large': MobileNetV3Large
@@ -149,5 +155,7 @@ def get_model(method, name):
         return Manual_model_dict[name]
     elif method == 'proxyless_NAS':
         return Proxyless_NAS_model_dict[name]
+    elif method == 'my_model':
+        return My_model_dict[name]
     else:
         raise NotImplementedError
