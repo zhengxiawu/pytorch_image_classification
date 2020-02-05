@@ -38,7 +38,7 @@ class TrainingConfig(BaseConfig):
         parser.add_argument('--print_freq', type=int, default=200, help='print frequency')
         parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                             '`all` indicates use all gpus.')
-        parser.add_argument('--epochs', type=int, default=300, help='# of training epochs')
+        parser.add_argument('--epochs', type=int, default=150, help='# of training epochs')
         parser.add_argument('--init_channels', type=int, default=36)
         parser.add_argument('--layers', type=int, default=20, help='# of layers')
         parser.add_argument('--seed', type=int, default=2, help='random seed')
