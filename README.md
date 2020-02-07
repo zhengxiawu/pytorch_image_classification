@@ -88,7 +88,7 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 | proxyless_mobile_14  | 150 | 0.0  | 0.1 |580.883 |-|
 | proxyless_mobile  | 150 | 0.0  | 0.1 |320.428 |73.41|
 | proxyless_gpu  | 150 | 0.0  | 0.1 |465.260 |73.93|
-| proxyless_cpu  | 150 | 0.0  | 0.1 |439.244 |-|
+| proxyless_cpu  | 150 | 0.0  | 0.1 |439.244 |74.15|
 | ofa_595  | 150 | 0.0  | 0.1 |512.862 |-|
 | ofa_482  | 150 | 0.0  | 0.1 |482.413 |-|
 | ofa_398  | 150 | 0.0  | 0.1 |389.488 |-|
