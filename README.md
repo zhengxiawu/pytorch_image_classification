@@ -77,3 +77,21 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type torch --epochs 300 --auto_augmentation --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 48 --layers 14 --model_method darts_NAS --model_name MDENAS
 python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --data_loader_type torch --epochs 300 --auto_augmentation  --model_method proxyless_NAS --model_name proxyless_gpu 
 ```
+
+## Results
+### ImageNet
+
+|Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
+|:----|:----:|:----:|:----:|:----:|:----:|
+| MobileNetV2  | 150 | 0.0  | 0.1 |300.774 |71.67|
+| MobileNetV3  | 150 | 0.0  | 0.1 |216.590 |72.93|
+| proxyless_mobile_14  | 150 | 0.0  | 0.1 |580.883 |-|
+| proxyless_mobile  | 150 | 0.0  | 0.1 |320.428 |73.41|
+| proxyless_gpu  | 150 | 0.0  | 0.1 |465.260 |73.93|
+| proxyless_cpu  | 150 | 0.0  | 0.1 |439.244 |-|
+| ofa_595  | 150 | 0.0  | 0.1 |512.862 |-|
+| ofa_482  | 150 | 0.0  | 0.1 |482.413 |-|
+| ofa_398  | 150 | 0.0  | 0.1 |389.488 |-|
+| my_600_cifar10  | 150 | 0.0  | 0.1 |570.014 |-|
+| my_500_cifar10  | 150 | 0.0  | 0.1 |494.585 |-|
+| my_400_cifar10  | 150 | 0.0  | 0.1 |395.348 |-|
