@@ -13,6 +13,8 @@ from models import get_model
 from data import get_data
 import flops_counter
 
+project_path = '/userhome/project/pytorch_image_classification'
+
 
 class TrainingConfig(BaseConfig):
     def build_parser(self):
@@ -91,8 +93,8 @@ class TrainingConfig(BaseConfig):
         for i in name_componment:
             name_str += i + '_'
         name_str += time_str
-        self.path = os.path.join('/userhome/project/pytorch_image_classification/expreiments',
-                                 self.model_method, self.model_name, self.dataset, name_str)
+        self.path = os.path.join(project_path, 'experiments', self.model_method,
+                                 self.model_name, self.dataset, name_str)
         if len(self.genotype) > 1:
             self.genotype = gt.from_str(self.genotype)
         else:
@@ -175,6 +177,13 @@ def main():
         else:
             model = AugmentCNN(input_size, input_channels, config.init_channels, n_classes, config.layers,
                                use_aux, config.genotype)
+    elif config.model_method == 'my_model_collection':
+        from models.my_searched_model import my_specialized
+        _ = config.model_name.split(':')
+        net_config_path = os.path.join(project_path, 'models', 'my_model_collection',
+                                       _[0], _[1] + '.json')
+        model = my_specialized(num_classes=n_classes, net_config=net_config_path,
+                               dropout_rate=config.dropout_rate)
     else:
         model_fun = get_model.get_model(config.model_method, config.model_name)
         model = model_fun(num_classes=n_classes, dropout_rate=config.dropout_rate)

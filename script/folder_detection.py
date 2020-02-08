@@ -3,12 +3,13 @@ import sys
 from datetime import datetime
 import time
 import shutil
+import glob
 
-walk_dir = sys.argv[1]
-
-print('walk_dir = ' + walk_dir)
-
-print('walk_dir (absolute) = ' + os.path.abspath(walk_dir))
+# walk_dir = sys.argv[1]
+#
+# print('walk_dir = ' + walk_dir)
+#
+# print('walk_dir (absolute) = ' + os.path.abspath(walk_dir))
 
 
 def get_folder_list(walk_dir):
@@ -60,6 +61,25 @@ def read_result(walk_dir):
                 print(log_lines[-1])
 
 
+def get_result():
+    project_experiment_path = '/userhome/project/pytorch_image_classification/'
+
+    folder_list = glob.glob(project_experiment_path + 'expreiments/*/*/cifar10/'
+                                                      'torch_epoch_300_label_smoothing_0.1_no_decay_keys_bn*')
+    folder_list.sort()
+    for i in folder_list:
+        name = i.split('/')[-3]
+        file = open(os.path.join(i, 'logger.log'))
+        file_lines = file.readlines()
+        performance = file_lines[-1][-9:-4]
+        Flops = file_lines[37][-9:-2]
+        markdown = '| {}  | 300 | 0.0  | 0.1 |{} |{}|'.format(name, Flops, performance)
+        print(markdown)
+
+
 if __name__ == '__main__':
-    folder_clean(walk_dir, True)
+    # folder_clean(walk_dir, True)
     # read_result(walk_dir)
+    # result detect
+    get_result()
+

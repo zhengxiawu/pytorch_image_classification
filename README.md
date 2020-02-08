@@ -95,3 +95,33 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 | my_600_cifar10  | 150 | 0.0  | 0.1 |570.014 |-|
 | my_500_cifar10  | 150 | 0.0  | 0.1 |494.585 |-|
 | my_400_cifar10  | 150 | 0.0  | 0.1 |395.348 |-|
+
+### CIFAR-10
+
+|Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
+|:----|:----:|:----:|:----:|:----:|:----:|
+| MobileNetV2  | 300 | 0.0  | 0.1 | 6.125  |82.73|
+| MobileNetV3Large  | 300 | 0.0  | 0.1 | 7.087  |83.00|
+| Resnet18  | 300 | 0.0  | 0.1 |55.423  |93.59|
+| my_400  | 300 | 0.0  | 0.1 |10.641  |86.30|
+| my_500  | 300 | 0.0  | 0.1 |13.323  |86.35|
+| my_600  | 300 | 0.0  | 0.1 |15.236  |85.82|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:100  | 300 | 0.0  | 0.1 | 4.162  |79.74|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:200  | 300 | 0.0  | 0.1 | 7.889  |80.94|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:300  | 300 | 0.0  | 0.1 | 9.920  |84.08|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:400  | 300 | 0.0  | 0.1 |12.271  |85.55|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:500  | 300 | 0.0  | 0.1 |14.274  |85.37|
+| ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600  | 300 | 0.0  | 0.1 |14.984  |85.67|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:100  | 300 | 0.0  | 0.1 | 1.965  |79.62|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:200  | 300 | 0.0  | 0.1 | 4.083  |83.75|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:300  | 300 | 0.0  | 0.1 | 6.124  |82.54|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:400  | 300 | 0.0  | 0.1 | 8.127  |84.87|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:500  | 300 | 0.0  | 0.1 |10.148  |84.70|
+| proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600  | 300 | 0.0  | 0.1 |12.123  |85.51|
+| ofa_398  | 300 | 0.0  | 0.1 |12.115  |84.02|
+| ofa_482  | 300 | 0.0  | 0.1 |14.386  |85.37|
+| ofa_595  | 300 | 0.0  | 0.1 |15.029  |85.72|
+| proxyless_cpu  | 300 | 0.0  | 0.1 | 8.949  |82.85|
+| proxyless_gpu  | 300 | 0.0  | 0.1 | 9.477  |80.99|
+| proxyless_mobile  | 300 | 0.0  | 0.1 | 6.526  |81.28|
+| proxyless_mobile_14  | 300 | 0.0  | 0.1 |11.836  |82.91|
