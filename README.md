@@ -143,3 +143,15 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 | proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:400  | 300 | 0.0  | 0.1 | 8.127  |84.87|
 | proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:500  | 300 | 0.0  | 0.1 |10.148  |84.70|
 | proxyless__dataset_cifar10_width_multi_1.3_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600  | 300 | 0.0  | 0.1 |12.123  |85.51|
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600 | 300 | 0.0 | 0.1 | 13.719 | 85.55 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 16.544 | 86.37 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_6:600 | 300 | 0.0 | 0.1 | 12.259 | 86.11 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_9:600 | 300 | 0.0 | 0.1 | 15.372 | 86.76 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_10_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 12.846 | 85.76 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_10_lr_0.1_pruning_step_3_1:600 | 300 | 0.0 | 0.1 | 15.458 | 86.11 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_10_lr_0.1_pruning_step_3_2:600 | 300 | 0.0 | 0.1 | 15.444 | 86.48 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_10_warm_up_epochs_10_lr_0.1_pruning_step_3_3:600 | 300 | 0.0 | 0.1 | 15.878 | 86.28 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_2_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 13.883 | 86.25 |
+| ofa_cifar10_width_multi_1.2_epochs_1000_data_split_5_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 16.372 | 86.22 |
+| ofa_cifar10_width_multi_1.3_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 17.203 | 86.37 |
+| ofa_cifar10_width_multi_1.4_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 16.431 | 86.48 |
