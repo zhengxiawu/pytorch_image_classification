@@ -157,3 +157,4 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 | ofa_cifar10_width_multi_1.4_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.1_pruning_step_3:600 | 300 | 0.0 | 0.1 | 16.431 | 86.48 |
 | EfficientNet_b0 | 300 | 0.0 | 0.1 | 8.475 | 80.93 |
 | FBNet-C | 300 | 0.0 | 0.1 | 7.836 | 79.3 |
+| proxyless__dataset_imagenet_width_multi_1.3_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600 | 300 | 0.0 | 0.1 | 12.129 | 84.48 |
