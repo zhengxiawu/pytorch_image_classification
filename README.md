@@ -96,7 +96,7 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 | my_500_cifar10  | 150 | 0.0  | 0.1 |494.585 |74.99|
 | my_400_cifar10  | 150 | 0.0  | 0.1 |395.348 |73.36|
 | MobileNetV2  | 300 | 0.2  | 0.1 |300.774 |-|
-| MobileNetV3  | 300 | 0.2  | 0.1 |216.590 |-|
+| MobileNetV3  | 300 | 0.2  | 0.1 |216.590 |73.94|
 | proxyless_mobile_14  | 300 | 0.2  | 0.1 |580.883 |-|
 | proxyless_mobile  | 300 | 0.2  | 0.1 |320.428 |-|
 | proxyless_gpu  | 300 | 0.2  | 0.1 |465.260 |-|
