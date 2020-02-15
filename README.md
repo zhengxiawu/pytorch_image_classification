@@ -104,7 +104,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | MobileNetV2  | 300 | 0.2  | 0.1 |300.774 |-|
 | MobileNetV3  | 300 | 0.2  | 0.1 |216.590 |73.94|
 | proxyless_mobile_14  | 300 | 0.2  | 0.1 |580.883 |-|
-| proxyless_mobile  | 300 | 0.2  | 0.1 |320.428 |-|
+| proxyless_mobile  | 300 | 0.2  | 0.1 |320.428 |74.36|
 | proxyless_gpu  | 300 | 0.2  | 0.1 |465.260 |-|
 | proxyless_cpu  | 300 | 0.2  | 0.1 |439.244 |-|
 | ofa_595  | 300 | 0.2  | 0.1 |512.862 |-|
