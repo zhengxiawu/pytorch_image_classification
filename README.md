@@ -113,6 +113,8 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | my_600_cifar10  | 300 | 0.2  | 0.1 |570.014 |-|
 | my_500_cifar10  | 300 | 0.2  | 0.1 |494.585 |-|
 | my_400_cifar10  | 300 | 0.2  | 0.1 |395.348 |-|
+| proxyless_mobile_14  | 300 | 0.0  | 0.1 |580.883 |-|
+| proxyless_gpu  | 300 | 0.0  | 0.1 |465.260 |74.16|
 
 ### CIFAR-10
 
