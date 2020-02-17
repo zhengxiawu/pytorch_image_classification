@@ -107,7 +107,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | proxyless_mobile  | 300 | 0.2  | 0.1 |320.428 |74.36|
 | proxyless_gpu  | 300 | 0.2  | 0.1 |465.260 |75.42|
 | proxyless_cpu  | 300 | 0.2  | 0.1 |439.244 |75.00|
-| ofa_595  | 300 | 0.2  | 0.1 |512.862 |-|
+| ofa_595  | 300 | 0.2  | 0.1 |512.862 |76.87|
 | ofa_482  | 300 | 0.2  | 0.1 |482.413 |-|
 | ofa_398  | 300 | 0.2  | 0.1 |389.488 |75.90|
 | my_600_cifar10  | 300 | 0.2  | 0.1 |570.014 |-|
@@ -115,6 +115,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | my_400_cifar10  | 300 | 0.2  | 0.1 |395.348 |-|
 | proxyless_mobile_14  | 300 | 0.0  | 0.1 |580.883 |75.27|
 | proxyless_gpu  | 300 | 0.0  | 0.1 |465.260 |74.16|
+| ofa_482  | 300 | 0.0  | 0.1 |482.413 |75.80|
 
 ### CIFAR-10
 
