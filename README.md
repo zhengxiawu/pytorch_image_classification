@@ -85,8 +85,10 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 ```
 
 ## Results
+
 ### ImageNet
 
+#### train.py 
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
 |:----|:----:|:----:|:----:|:----:|:----:|
 | MobileNetV2  | 150 | 0.0  | 0.1 |300.774 |71.67|
@@ -115,6 +117,12 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | proxyless_gpu  | 300 | 0.0  | 0.1 |465.260 |74.16|
 | ofa_482  | 300 | 0.0  | 0.1 |482.413 |75.80|
 
+#### timm_train.py 
+
+|Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
+|:----|:----:|:----:|:----:|:----:|:----:|
+| MobileNetV2  | 450 | 0.2  | 0.1 |300.774 |-|
+| MobileNetV3  | 450 | 0.2  | 0.1 |216.590 |-|
 ### CIFAR-10
 
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
