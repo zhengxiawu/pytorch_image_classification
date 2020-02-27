@@ -122,7 +122,10 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
 |:----|:----:|:----:|:----:|:----:|:----:|
 | MobileNetV2  | 450 | 0.2  | 0.1 |300.774 |-|
-| MobileNetV3  | 450 | 0.2  | 0.1 |216.590 |-|
+| MobileNetV3  | 450 | 0.2  | 0.1 |216.590 |75.492|
+| MobileNetV3  | 250 | 0.2  | 0.1 |216.590 |75.41|
+| MobileNetV3  | 200 | 0.2  | 0.1 |216.590 |75.052|
+| MobileNetV3  | 150 | 0.2  | 0.1 |216.590 |74.426|
 ### CIFAR-10
 
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
