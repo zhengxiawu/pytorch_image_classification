@@ -57,6 +57,7 @@ class TrainingConfig(BaseConfig):
         parser.add_argument('--drop_path_prob', type=float, default=0, help='drop path prob')
 
         parser.add_argument('--genotype', default='', help='Cell genotype')
+        parser.add_argument('--structure_path', default=None, type=str, help='Config path')
         parser.add_argument('--deterministic', action='store_true', default=False, help='using deterministic model')
 
         return parser
@@ -179,9 +180,12 @@ def main():
                                use_aux, config.genotype)
     elif config.model_method == 'my_model_collection':
         from models.my_searched_model import my_specialized
-        _ = config.model_name.split(':')
-        net_config_path = os.path.join(project_path, 'models', 'my_model_collection',
-                                       _[0], _[1] + '.json')
+        if config.structure_path is None:
+            _ = config.model_name.split(':')
+            net_config_path = os.path.join(project_path, 'models', 'my_model_collection',
+                                           _[0], _[1] + '.json')
+        else:
+            net_config_path = config.structure_path
         model = my_specialized(num_classes=n_classes, net_config=net_config_path,
                                dropout_rate=config.dropout_rate)
     else:

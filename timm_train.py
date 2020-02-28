@@ -19,6 +19,7 @@ import time
 import yaml
 from datetime import datetime
 import pdb
+import flops_counter
 
 try:
     from apex import amp
@@ -40,6 +41,7 @@ from timm.scheduler import create_scheduler
 import torch
 import torch.nn as nn
 import torchvision.utils
+import utils
 
 # my model
 from models.darts.augment_cnn import AugmentCNN, AugmentCNN_ImageNet
@@ -201,6 +203,7 @@ parser.add_argument('--model_init', type=str, default='he_fout', choices=['he_fi
 parser.add_argument('--genotype', default='', help='Cell genotype')
 parser.add_argument('--init_channels', type=int, default=36)
 parser.add_argument('--layers', type=int, default=20, help='# of layers')
+parser.add_argument('--structure_path', default=None, type=str, help='Config path')
 
 
 def _parse_args():
@@ -219,17 +222,32 @@ def _parse_args():
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
     return args, args_text
 
+args, args_text = _parse_args()
+
+output_dir = ''
+if args.local_rank == 0:
+    output_base = args.output if args.output else './output'
+    exp_name = '-'.join([
+        datetime.now().strftime("%Y%m%d-%H%M%S"),
+        args.model_method,
+        args.model_name,
+    ])
+    output_dir = get_outdir(output_base, 'train', exp_name)
+    decreasing = True if args.eval_metric == 'loss' else False
+    saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
+    with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
+        f.write(args_text)
+
+logger = utils.get_logger(os.path.join(output_dir, "logger.log"))
+
 
 def main():
-    setup_default_logging()
-    args, args_text = _parse_args()
-
     args.prefetcher = not args.no_prefetcher
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:
         args.distributed = int(os.environ['WORLD_SIZE']) > 1
         if args.distributed and args.num_gpu > 1:
-            logging.warning('Using more than one GPU per process in distributed mode is not allowed. Setting num_gpu to 1.')
+            logger.warning('Using more than one GPU per process in distributed mode is not allowed. Setting num_gpu to 1.')
             args.num_gpu = 1
 
     args.device = 'cuda:0'
@@ -245,10 +263,10 @@ def main():
     assert args.rank >= 0
 
     if args.distributed:
-        logging.info('Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d.'
+        logger.info('Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d.'
                      % (args.rank, args.world_size))
     else:
-        logging.info('Training with a single process on %d GPUs.' % args.num_gpu)
+        logger.info('Training with a single process on %d GPUs.' % args.num_gpu)
 
     torch.manual_seed(args.seed + args.rank)
 
@@ -261,9 +279,12 @@ def main():
                                     use_aux, args.genotype)
     elif args.model_method == 'my_model_collection':
         from models.my_searched_model import my_specialized
-        _ = args.model_name.split(':')
-        net_config_path = os.path.join(project_path, 'models', 'my_model_collection',
-                                       _[0], _[1] + '.json')
+        if args.structure_path is None:
+            _ = args.model_name.split(':')
+            net_config_path = os.path.join(project_path, 'models', 'my_model_collection',
+                                           _[0], _[1] + '.json')
+        else:
+            net_config_path = args.structure_path
         model = my_specialized(num_classes=args.num_classes, net_config=net_config_path,
                                dropout_rate=args.drop)
     else:
@@ -273,6 +294,9 @@ def main():
     model.set_bn_param(args.bn_momentum, args.bn_eps)
     # model init
     model.init_model(model_init=args.model_init)
+    total_ops, total_params = flops_counter.profile(model, [1, 3, 224, 224])
+    logger.info("Model size = {:.3f} MB".format(total_params))
+    logger.info("Model FLOPS with input [1,3,224,224] = {:.3f} M".format(total_ops))
     # pdb.set_trace()
     # model = create_model(
     #     args.model,
@@ -287,7 +311,7 @@ def main():
     #     checkpoint_path=args.initial_checkpoint)
 
     if args.local_rank == 0:
-        logging.info('Model %s created, param count: %d' %
+        logger.info('Model %s created, param count: %d' %
                      (args.model, sum([m.numel() for m in model.parameters()])))
 
     data_config = resolve_data_config(vars(args), model=model, verbose=args.local_rank == 0)
@@ -303,7 +327,7 @@ def main():
 
     if args.num_gpu > 1:
         if args.amp:
-            logging.warning(
+            logger.warning(
                 'AMP does not work well with nn.DataParallel, disabling. Use distributed mode for multi-GPU AMP.')
             args.amp = False
         model = nn.DataParallel(model, device_ids=list(range(args.num_gpu))).cuda()
@@ -317,7 +341,7 @@ def main():
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
         use_amp = True
     if args.local_rank == 0:
-        logging.info('NVIDIA APEX {}. AMP {}.'.format(
+        logger.info('NVIDIA APEX {}. AMP {}.'.format(
             'installed' if has_apex else 'not installed', 'on' if use_amp else 'off'))
 
     # optionally resume from a checkpoint
@@ -328,11 +352,11 @@ def main():
     if resume_state and not args.no_resume_opt:
         if 'optimizer' in resume_state:
             if args.local_rank == 0:
-                logging.info('Restoring Optimizer state from checkpoint')
+                logger.info('Restoring Optimizer state from checkpoint')
             optimizer.load_state_dict(resume_state['optimizer'])
         if use_amp and 'amp' in resume_state and 'load_state_dict' in amp.__dict__:
             if args.local_rank == 0:
-                logging.info('Restoring NVIDIA AMP state from checkpoint')
+                logger.info('Restoring NVIDIA AMP state from checkpoint')
             amp.load_state_dict(resume_state['amp'])
     del resume_state
 
@@ -354,16 +378,16 @@ def main():
                 else:
                     model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
                 if args.local_rank == 0:
-                    logging.info(
+                    logger.info(
                         'Converted model to use Synchronized BatchNorm. WARNING: You may have issues if using '
                         'zero initialized BN layers (enabled by default for ResNets) while sync-bn enabled.')
             except Exception as e:
-                logging.error('Failed to enable Synchronized BatchNorm. Install Apex or Torch >= 1.1')
+                logger.error('Failed to enable Synchronized BatchNorm. Install Apex or Torch >= 1.1')
         if has_apex:
             model = DDP(model, delay_allreduce=True)
         else:
             if args.local_rank == 0:
-                logging.info("Using torch DistributedDataParallel. Install NVIDIA Apex for Apex DDP.")
+                logger.info("Using torch DistributedDataParallel. Install NVIDIA Apex for Apex DDP.")
             model = DDP(model, device_ids=[args.local_rank])  # can use device str in Torch >= 1.1
         # NOTE: EMA model does not need to be wrapped by DDP
 
@@ -378,11 +402,11 @@ def main():
         lr_scheduler.step(start_epoch)
 
     if args.local_rank == 0:
-        logging.info('Scheduled epochs: {}'.format(num_epochs))
+        logger.info('Scheduled epochs: {}'.format(num_epochs))
 
     train_dir = os.path.join(args.data, 'train')
     if not os.path.exists(train_dir):
-        logging.error('Training folder does not exist at: {}'.format(train_dir))
+        logger.error('Training folder does not exist at: {}'.format(train_dir))
         exit(1)
     dataset_train = Dataset(train_dir)
 
@@ -420,7 +444,7 @@ def main():
     if not os.path.isdir(eval_dir):
         eval_dir = os.path.join(args.data, 'validation')
         if not os.path.isdir(eval_dir):
-            logging.error('Validation folder does not exist at: {}'.format(eval_dir))
+            logger.error('Validation folder does not exist at: {}'.format(eval_dir))
             exit(1)
     dataset_eval = Dataset(eval_dir)
 
@@ -458,20 +482,20 @@ def main():
     best_metric = None
     best_epoch = None
     saver = None
-    output_dir = ''
-    if args.local_rank == 0:
-        output_base = args.output if args.output else './output'
-        exp_name = '-'.join([
-            datetime.now().strftime("%Y%m%d-%H%M%S"),
-            args.model_method,
-            args.model_name,
-            str(data_config['input_size'][-1])
-        ])
-        output_dir = get_outdir(output_base, 'train', exp_name)
-        decreasing = True if eval_metric == 'loss' else False
-        saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
-        with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
-            f.write(args_text)
+    # output_dir = ''
+    # if args.local_rank == 0:
+    #     output_base = args.output if args.output else './output'
+    #     exp_name = '-'.join([
+    #         datetime.now().strftime("%Y%m%d-%H%M%S"),
+    #         args.model_method,
+    #         args.model_name,
+    #         str(data_config['input_size'][-1])
+    #     ])
+    #     output_dir = get_outdir(output_base, 'train', exp_name)
+    #     decreasing = True if eval_metric == 'loss' else False
+    #     saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
+    #     with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
+    #         f.write(args_text)
 
     try:
         for epoch in range(start_epoch, num_epochs):
@@ -485,7 +509,7 @@ def main():
 
             if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
                 if args.local_rank == 0:
-                    logging.info("Distributing BatchNorm running means and vars")
+                    logger.info("Distributing BatchNorm running means and vars")
                 distribute_bn(model, args.world_size, args.dist_bn == 'reduce')
 
             eval_metrics = validate(model, loader_eval, validate_loss_fn, args)
@@ -516,7 +540,7 @@ def main():
     except KeyboardInterrupt:
         pass
     if best_metric is not None:
-        logging.info('*** Best metric: {0} (epoch {1})'.format(best_metric, best_epoch))
+        logger.info('*** Best metric: {0} (epoch {1})'.format(best_metric, best_epoch))
 
 
 def train_epoch(
@@ -576,7 +600,7 @@ def train_epoch(
                 losses_m.update(reduced_loss.item(), input.size(0))
 
             if args.local_rank == 0:
-                logging.info(
+                logger.info(
                     'Train: {} [{:>4d}/{} ({:>3.0f}%)]  '
                     'Loss: {loss.val:>9.6f} ({loss.avg:>6.4f})  '
                     'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s  '
@@ -664,7 +688,7 @@ def validate(model, loader, loss_fn, args, log_suffix=''):
             end = time.time()
             if args.local_rank == 0 and (last_batch or batch_idx % args.log_interval == 0):
                 log_name = 'Test' + log_suffix
-                logging.info(
+                logger.info(
                     '{0}: [{1:>4d}/{2}]  '
                     'Time: {batch_time.val:.3f} ({batch_time.avg:.3f})  '
                     'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
