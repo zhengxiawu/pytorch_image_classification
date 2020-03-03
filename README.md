@@ -121,7 +121,8 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
 |:----|:----:|:----:|:----:|:----:|:----:|
-| MobileNetV2  | 450 | 0.2  | 0.1 |300.774 |-|
+| MobileNetV2  | 450 | 0.2  | 0.1 |300.774 |73.41|
+| MobileNetV2  | 250 | 0.2  | 0.1 |300.774 |72.41|
 | MobileNetV3  | 450 | 0.2  | 0.1 |216.590 |75.492|
 | MobileNetV3  | 250 | 0.2  | 0.1 |216.590 |75.41|
 | MobileNetV3  | 200 | 0.2  | 0.1 |216.590 |75.052|

@@ -5,6 +5,7 @@ from models.ofa.model_zoo import OFA_595, OFA_482, OFA_398
 from models.ofa.proxyless_nets import MobileNetV2
 from models.ofa.mobilenet_v3 import MobileNetV3Large
 from models.my_searched_model import MY_600, MY_500, MY_400
+import pdb
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 NASNet = Genotype(
     normal=[
@@ -122,11 +123,27 @@ DDPNAS_2 = Genotype(
     ],
     reduce_concat=range(2, 6))
 
+DDPNAS_3 = Genotype(
+    normal=[
+        [('sep_conv_5x5', 0), ('max_pool_3x3', 1)],
+        [('skip_connect', 0), ('avg_pool_3x3', 2)],
+        [('dil_conv_3x3', 1), ('sep_conv_5x5', 0)],
+        [('max_pool_3x3', 0), ('dil_conv_5x5', 4)]],
+    normal_concat=range(2, 6),
+    reduce=[
+        [('dil_conv_3x3', 0), ('max_pool_3x3', 1)],
+        [('sep_conv_3x3', 1), ('sep_conv_3x3', 2)],
+        [('avg_pool_3x3', 0), ('avg_pool_3x3', 2)],
+        [('max_pool_3x3', 1), ('max_pool_3x3', 3)]],
+    reduce_concat=range(2, 6))
+
 DARTS_NAS_model_dict = {'MDENAS': MDENAS,
-              'DDPNAS_V1': DDPNAS_1,
-              'DDPNAS_V2': DDPNAS_2,
-              'DARTS_V1': DARTS_V1,
-              'DARTS_V2': DARTS_V2}
+                        'DDPNAS_V1': DDPNAS_1,
+                        'DDPNAS_V2': DDPNAS_2,
+                        'DDPNAS_V3': DDPNAS_3,
+                        'DARTS_V1': DARTS_V1,
+                        'DARTS_V2': DARTS_V2,
+                        }
 
 Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
                             'proxyless_cpu': proxyless_cpu,

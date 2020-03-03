@@ -195,7 +195,10 @@ class AugmentCNN_ImageNet(BaseModel.MyNetwork):
         if self.dropout is not None:
             out = self.dropout(out)
         logits = self.linear(out)
-        return logits, aux_logits
+        if self.aux_pos == -1:
+            return logits
+        else:
+            return logits, aux_logits
 
     def drop_path_prob(self, p):
         """ Set drop path probability """

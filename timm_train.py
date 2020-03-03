@@ -20,6 +20,7 @@ import yaml
 from datetime import datetime
 import pdb
 import flops_counter
+from models.darts import genotypes
 
 try:
     from apex import amp
@@ -200,9 +201,9 @@ parser.add_argument('--aux_weight', type=float, default=0, help='auxiliary loss 
 parser.add_argument('--model_method', default='proxyless_NAS',)
 parser.add_argument('--model_name', default='proxyless_gpu', )
 parser.add_argument('--model_init', type=str, default='he_fout', choices=['he_fin', 'he_fout'])
-parser.add_argument('--genotype', default='', help='Cell genotype')
-parser.add_argument('--init_channels', type=int, default=36)
-parser.add_argument('--layers', type=int, default=20, help='# of layers')
+parser.add_argument('--genotype', default=None, help='Cell genotype')
+parser.add_argument('--init_channels', type=int, default=48)
+parser.add_argument('--layers', type=int, default=14, help='# of layers')
 parser.add_argument('--structure_path', default=None, type=str, help='Config path')
 
 
@@ -222,6 +223,7 @@ def _parse_args():
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
     return args, args_text
 
+
 args, args_text = _parse_args()
 
 output_dir = ''
@@ -233,8 +235,6 @@ if args.local_rank == 0:
         args.model_name,
     ])
     output_dir = get_outdir(output_base, 'train', exp_name)
-    decreasing = True if args.eval_metric == 'loss' else False
-    saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
     with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
         f.write(args_text)
 
@@ -275,8 +275,9 @@ def main():
     if args.model_method == 'darts_NAS':
         if args.genotype is None:
             args.genotype = get_model.get_model(args.model_method, args.model_name)
+        gene = args.genotype
         model = AugmentCNN_ImageNet(224, 3, args.init_channels, args.num_classes, args.layers,
-                                    use_aux, args.genotype)
+                                    use_aux, gene)
     elif args.model_method == 'my_model_collection':
         from models.my_searched_model import my_specialized
         if args.structure_path is None:
@@ -496,7 +497,8 @@ def main():
     #     saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
     #     with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
     #         f.write(args_text)
-
+    decreasing = True if eval_metric == 'loss' else False
+    saver = CheckpointSaver(checkpoint_dir=output_dir, decreasing=decreasing)
     try:
         for epoch in range(start_epoch, num_epochs):
             if args.distributed:
