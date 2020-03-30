@@ -43,6 +43,7 @@ import torch
 import torch.nn as nn
 import torchvision.utils
 import utils
+import pdb
 
 # my model
 from models.darts.augment_cnn import AugmentCNN, AugmentCNN_ImageNet
@@ -225,18 +226,39 @@ def _parse_args():
 
 
 args, args_text = _parse_args()
+if len(args.resume) > 0:
+    with open(os.path.join(args.resume, 'args.yaml'), 'r') as stream:
+        try:
+            data = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    del data['resume']
+    arg_dict = args.__dict__
+    for key, value in data.items():
+        if isinstance(value, list):
+            for v in value:
+                arg_dict[key].append(v)
+        else:
+            arg_dict[key] = value
+    # for testing
+    output_dir = args.resume
+    # find maximum epoch
+    check_point_list = glob.glob(output_dir + '/checkpoint*')
+    check_point_list.sort()
+    args.resume = check_point_list[-1]
 
-output_dir = ''
-if args.local_rank == 0:
-    output_base = args.output if args.output else './output'
-    exp_name = '-'.join([
-        datetime.now().strftime("%Y%m%d-%H%M%S"),
-        args.model_method,
-        args.model_name,
-    ])
-    output_dir = get_outdir(output_base, 'train', exp_name)
-    with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
-        f.write(args_text)
+else:
+    output_dir = ''
+    if args.local_rank == 0:
+        output_base = args.output if args.output else './output'
+        exp_name = '-'.join([
+            args.model_method,
+            args.model_name,
+            datetime.now().strftime("%Y%m%d-%H%M%S"),
+        ])
+        output_dir = get_outdir(output_base, 'train', exp_name)
+        with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
+            f.write(args_text)
 
 logger = utils.get_logger(os.path.join(output_dir, "logger.log"))
 

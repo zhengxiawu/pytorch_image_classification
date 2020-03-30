@@ -6,6 +6,7 @@ from models.ofa.proxyless_nets import MobileNetV2
 from models.ofa.mobilenet_v3 import MobileNetV3Large
 from models.my_searched_model import MY_600, MY_500, MY_400
 import pdb
+from models.darts.genotypes import from_str
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 NASNet = Genotype(
     normal=[
@@ -137,12 +138,43 @@ DDPNAS_3 = Genotype(
         [('max_pool_3x3', 1), ('max_pool_3x3', 3)]],
     reduce_concat=range(2, 6))
 
+DDPNAS_V3_constraint_4 = Genotype(normal=[[('sep_conv_5x5', 0), ('sep_conv_3x3', 1)], [('sep_conv_3x3', 0), ('skip_connect', 1)], [('sep_conv_3x3', 0), ('dil_conv_3x3', 3)], [('sep_conv_5x5', 0), ('avg_pool_3x3', 4)]], normal_concat=range(2, 6), reduce=[[('sep_conv_5x5', 1), ('skip_connect', 0)], [('sep_conv_5x5', 1), ('dil_conv_3x3', 0)], [('sep_conv_5x5', 1), ('max_pool_3x3', 0)], [('sep_conv_5x5', 1), ('avg_pool_3x3', 3)]], reduce_concat=range(2, 6))
+
+# BPE models
+BPE_models = {
+    'EA_BPE1': "Genotype(normal=[[('avg_pool_3x3', 0), ('skip_connect', 1)], [('skip_connect', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('dil_conv_5x5', 1)], [('sep_conv_3x3', 0), ('sep_conv_5x5', 2)]], normal_concat=range(2, 6), reduce=[[('max_pool_3x3', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 0), ('skip_connect', 2)], [('max_pool_3x3', 1), ('skip_connect', 2)]], reduce_concat=range(2, 6))",
+
+    'EA_BPE2': "Genotype(normal=[[('skip_connect', 0), ('avg_pool_3x3', 1)], [('max_pool_3x3', 0), ('skip_connect', 2)], [('dil_conv_3x3', 1), ('avg_pool_3x3', 2)], [('sep_conv_3x3', 1), ('sep_conv_3x3', 2)]], normal_concat=range(2, 6), reduce=[[('avg_pool_3x3', 0), ('dil_conv_3x3', 1)], [('dil_conv_5x5', 0), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 0), ('sep_conv_5x5', 1)], [('skip_connect', 1), ('sep_conv_3x3', 4)]], reduce_concat=range(2, 6))",
+
+    'RL_BPE1': "Genotype(normal=[[('skip_connect', 0), ('dil_conv_3x3', 1)], [('sep_conv_3x3', 1), ('avg_pool_3x3', 2)], [('sep_conv_3x3', 0), ('max_pool_3x3', 3)], [('sep_conv_5x5', 0), ('avg_pool_3x3', 3)]], normal_concat=range(2, 6), reduce=[[('dil_conv_3x3', 0), ('sep_conv_5x5', 1)], [('sep_conv_5x5', 0), ('max_pool_3x3', 1)], [('dil_conv_3x3', 2), ('sep_conv_5x5', 3)], [('avg_pool_3x3', 0), ('sep_conv_3x3', 4)]], reduce_concat=range(2, 6))",
+
+    'RL_BPE2': "Genotype(normal=[[('skip_connect', 0), ('avg_pool_3x3', 1)], [('sep_conv_3x3', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('skip_connect', 1)], [('avg_pool_3x3', 0), ('avg_pool_3x3', 2)]], normal_concat=range(2, 6), reduce=[[('sep_conv_5x5', 0), ('skip_connect', 1)], [('avg_pool_3x3', 1), ('sep_conv_3x3', 2)], [('dil_conv_5x5', 1), ('sep_conv_3x3', 3)], [('avg_pool_3x3', 1), ('max_pool_3x3', 4)]], reduce_concat=range(2, 6))",
+
+    'DARTS_BPE1': "Genotype(normal=[[('sep_conv_3x3', 0), ('dil_conv_3x3', 1)], [('sep_conv_3x3', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 4), ('sep_conv_5x5', 3)]], normal_concat=range(2, 6), reduce=[[('dil_conv_3x3', 0), ('sep_conv_5x5', 1)], [('sep_conv_5x5', 1), ('sep_conv_5x5', 0)], [('sep_conv_5x5', 3), ('dil_conv_5x5', 2)], [('dil_conv_5x5', 4), ('sep_conv_5x5', 3)]], reduce_concat=range(2, 6))",
+
+    'DARTS_BPE2': "Genotype(normal=[[('sep_conv_3x3', 0), ('sep_conv_3x3', 1)], [('sep_conv_3x3', 0), ('sep_conv_3x3', 2)], [('sep_conv_3x3', 0), ('sep_conv_5x5', 3)], [('sep_conv_3x3', 4), ('sep_conv_3x3', 0)]], normal_concat=range(2, 6), reduce=[[('dil_conv_5x5', 1), ('sep_conv_5x5', 0)], [('avg_pool_3x3', 0), ('sep_conv_5x5', 1)], [('dil_conv_5x5', 3), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 2), ('sep_conv_3x3', 1)]], reduce_concat=range(2, 6))",
+
+    'RS_BPE1': "Genotype(normal=[[('sep_conv_5x5', 0), ('dil_conv_3x3', 1)], [('max_pool_3x3', 0), ('sep_conv_3x3', 1)], [('skip_connect', 3), ('sep_conv_5x5', 0)], [('sep_conv_3x3', 2), ('skip_connect', 0)]], normal_concat=range(2, 6), reduce=[[('dil_conv_5x5', 1), ('max_pool_3x3', 0)], [('sep_conv_3x3', 1), ('max_pool_3x3', 0)], [('dil_conv_3x3', 0), ('max_pool_3x3', 1)], [('dil_conv_3x3', 2), ('sep_conv_3x3', 0)]], reduce_concat=range(2, 6))",
+
+    'RS_BPE2': "Genotype(normal=[[('skip_connect', 1), ('sep_conv_3x3', 0)], [('avg_pool_3x3', 2), ('skip_connect', 0)], [('sep_conv_3x3', 1), ('avg_pool_3x3', 3)], [('avg_pool_3x3', 0), ('dil_conv_3x3', 2)]], normal_concat=range(2, 6), reduce=[[('skip_connect', 1), ('dil_conv_3x3', 0)], [('max_pool_3x3', 1), ('dil_conv_3x3', 0)], [('dil_conv_5x5', 3), ('max_pool_3x3', 0)], [('skip_connect', 3), ('dil_conv_3x3', 2)]], reduce_concat=range(2, 6))"
+}
+
+
 DARTS_NAS_model_dict = {'MDENAS': MDENAS,
                         'DDPNAS_V1': DDPNAS_1,
                         'DDPNAS_V2': DDPNAS_2,
                         'DDPNAS_V3': DDPNAS_3,
+                        'DDPNAS_V3_constraint_4': DDPNAS_V3_constraint_4,
                         'DARTS_V1': DARTS_V1,
                         'DARTS_V2': DARTS_V2,
+                        'EA_BPE1': from_str(BPE_models['EA_BPE1']),
+                        'EA_BPE2': from_str(BPE_models['EA_BPE2']),
+                        'RL_BPE1': from_str(BPE_models['RL_BPE1']),
+                        'RL_BPE2': from_str(BPE_models['RL_BPE2']),
+                        'DARTS_BPE1': from_str(BPE_models['DARTS_BPE1']),
+                        'DARTS_BPE2': from_str(BPE_models['DARTS_BPE2']),
+                        'RS_BPE1': from_str(BPE_models['RS_BPE1']),
+                        'RS_BPE2': from_str(BPE_models['RS_BPE2']),
                         }
 
 Proxyless_NAS_model_dict = {'proxyless_gpu': proxyless_gpu,
