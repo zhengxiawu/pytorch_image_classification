@@ -8,7 +8,8 @@ try:
     import nvidia.dali.ops as ops
     import nvidia.dali.types as types
 except ImportError:
-    raise ImportError("Please install DALI from https://www.github.com/NVIDIA/DALI to run this example.")
+    raise ImportError(
+        "Please install DALI from https://www.github.com/NVIDIA/DALI to run this example.")
 
 
 def get_data(dataset, data_path, cutout_length, auto_augmentation):
@@ -29,11 +30,14 @@ def get_data(dataset, data_path, cutout_length, auto_augmentation):
         n_classes = 1000
     else:
         raise ValueError(dataset)
-    trn_transform, val_transform = preproc.data_transforms(dataset, cutout_length, auto_augmentation)
+    trn_transform, val_transform = preproc.data_transforms(
+        dataset, cutout_length, auto_augmentation)
     if 'imagenet' in dataset:
-        trn_data = dset_cls(root=os.path.join(data_path, 'train'), transform=trn_transform)
+        trn_data = dset_cls(root=os.path.join(
+            data_path, 'train'), transform=trn_transform)
     else:
-        trn_data = dset_cls(root=data_path, train=True, download=True, transform=trn_transform)
+        trn_data = dset_cls(root=data_path, train=True,
+                            download=True, transform=trn_transform)
 
     # assuming shape is NHW or NHWC
     if 'imagenet' in dataset:
@@ -56,9 +60,11 @@ def get_data(dataset, data_path, cutout_length, auto_augmentation):
     input_size = shape[1]
     ret = [input_size, input_channels, n_classes, trn_data]
     if 'imagenet' in dataset:
-        ret.append(dset_cls(root=os.path.join(data_path, 'val'), transform=val_transform))
+        ret.append(dset_cls(root=os.path.join(
+            data_path, 'val'), transform=val_transform))
     else:
-        ret.append(dset_cls(root=data_path, train=False, download=True, transform=val_transform))
+        ret.append(dset_cls(root=data_path, train=False,
+                            download=True, transform=val_transform))
     return ret
 
 
@@ -71,7 +77,7 @@ def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
         train_loader = cifar10.get_cifar_iter_dali(type='train', image_dir=data_path,
                                                    batch_size=batch_size, num_threads=num_threads)
         val_loader = cifar10.get_cifar_iter_dali(type='val', image_dir=data_path,
-                                                   batch_size=batch_size, num_threads=num_threads)
+                                                 batch_size=batch_size, num_threads=num_threads)
     elif dataset == 'imagenet':
         input_size = 224
         input_channels = 3
@@ -80,8 +86,8 @@ def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
                                                        batch_size=batch_size, num_threads=num_threads,
                                                        crop=224, val_size=256)
         val_loader = imagenet.get_imagenet_iter_dali(type='val', image_dir=data_path,
-                                                       batch_size=batch_size, num_threads=num_threads,
-                                                       crop=224, val_size=256)
+                                                     batch_size=batch_size, num_threads=num_threads,
+                                                     crop=224, val_size=256)
     elif dataset == 'imagenet112':
         input_size = 112
         input_channels = 3
@@ -119,13 +125,16 @@ def get_data_dali(dataset, data_path, batch_size=256, num_threads=4):
 
 class HybridTrainPipe(Pipeline):
     def __init__(self, batch_size, num_threads, device_id, data_dir, crop, dali_cpu=False):
-        super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id)
-        self.input = ops.FileReader(file_root=data_dir, shard_id=0, num_shards=1, random_shuffle=True)
-        #let user decide which pipeline works him bets for RN version he runs
+        super(HybridTrainPipe, self).__init__(batch_size,
+                                              num_threads, device_id, seed=12 + device_id)
+        self.input = ops.FileReader(
+            file_root=data_dir, shard_id=0, num_shards=1, random_shuffle=True)
+        # let user decide which pipeline works him bets for RN version he runs
         if dali_cpu:
             dali_device = "cpu"
             self.decode = ops.HostDecoderRandomCrop(device=dali_device, output_type=types.RGB,
-                                                    random_aspect_ratio=[0.8, 1.25],
+                                                    random_aspect_ratio=[
+                                                        0.8, 1.25],
                                                     random_area=[0.1, 1.0],
                                                     num_attempts=100)
         else:
@@ -135,17 +144,20 @@ class HybridTrainPipe(Pipeline):
             self.decode = ops.nvJPEGDecoderRandomCrop(device="mixed", output_type=types.RGB,
                                                       device_memory_padding=211025920,
                                                       host_memory_padding=140544512,
-                                                      random_aspect_ratio=[0.8, 1.25],
+                                                      random_aspect_ratio=[
+                                                          0.8, 1.25],
                                                       random_area=[0.1, 1.0],
                                                       num_attempts=100)
-        self.res = ops.Resize(device=dali_device, resize_x=crop, resize_y=crop, interp_type=types.INTERP_TRIANGULAR)
+        self.res = ops.Resize(device=dali_device, resize_x=crop,
+                              resize_y=crop, interp_type=types.INTERP_TRIANGULAR)
         self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                             output_dtype=types.FLOAT,
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
-                                            mean=[0.485 * 255,0.456 * 255,0.406 * 255],
-                                            std=[0.229 * 255,0.224 * 255,0.225 * 255])
+                                            mean=[0.485 * 255, 0.456 *
+                                                  255, 0.406 * 255],
+                                            std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
         self.coin = ops.CoinFlip(probability=0.5)
         # self.color_jitter = [ops.Brightness(device="gpu", brightness=0.4),
         #                      ops.Contrast(device="gpu", contrast=0.4),
@@ -166,16 +178,20 @@ class HybridTrainPipe(Pipeline):
 
 class HybridValPipe(Pipeline):
     def __init__(self, batch_size, num_threads, device_id, data_dir, crop, size):
-        super(HybridValPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id)
-        self.input = ops.FileReader(file_root=data_dir, shard_id=0, num_shards=1, random_shuffle=False)
+        super(HybridValPipe, self).__init__(batch_size,
+                                            num_threads, device_id, seed=12 + device_id)
+        self.input = ops.FileReader(
+            file_root=data_dir, shard_id=0, num_shards=1, random_shuffle=False)
         self.decode = ops.nvJPEGDecoder(device="mixed", output_type=types.RGB)
-        self.res = ops.Resize(device="gpu", resize_shorter=size, interp_type=types.INTERP_TRIANGULAR)
+        self.res = ops.Resize(device="gpu", resize_shorter=size,
+                              interp_type=types.INTERP_TRIANGULAR)
         self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                             output_dtype=types.FLOAT,
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
-                                            mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                            mean=[0.485 * 255, 0.456 *
+                                                  255, 0.406 * 255],
                                             std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
 
     def define_graph(self):
@@ -189,13 +205,12 @@ class HybridValPipe(Pipeline):
 def get_dali_imagenet_pipeline(batch_size, num_threads, data_path, train_cpu=False,
                                crop=224, size=256):
     train_pipe = HybridTrainPipe(batch_size=batch_size, num_threads=num_threads, device_id=0,
-                           data_dir=os.path.join(data_path, 'train'),
-                           crop=crop, dali_cpu=train_cpu)
+                                 data_dir=os.path.join(data_path, 'train'),
+                                 crop=crop, dali_cpu=train_cpu)
     train_pipe.build()
 
     val_pipe = HybridValPipe(batch_size=batch_size, num_threads=num_threads, device_id=0,
-                         data_dir=os.path.join(data_path, 'val'),
-                         crop=crop, size=size)
+                             data_dir=os.path.join(data_path, 'val'),
+                             crop=crop, size=size)
     val_pipe.build()
     return [train_pipe, val_pipe]
-

@@ -139,8 +139,10 @@ DDPNAS_3 = Genotype(
     reduce_concat=range(2, 6))
 
 DDPNAS_V3_constraint_4 = Genotype(normal=[[('sep_conv_5x5', 0), ('sep_conv_3x3', 1)], [('sep_conv_3x3', 0), ('skip_connect', 1)], [('sep_conv_3x3', 0), ('dil_conv_3x3', 3)], [('sep_conv_5x5', 0), ('avg_pool_3x3', 4)]], normal_concat=range(2, 6), reduce=[[('sep_conv_5x5', 1), ('skip_connect', 0)], [('sep_conv_5x5', 1), ('dil_conv_3x3', 0)], [('sep_conv_5x5', 1), ('max_pool_3x3', 0)], [('sep_conv_5x5', 1), ('avg_pool_3x3', 3)]], reduce_concat=range(2, 6))
-
+# dynamic_SNG_V3 = Genotype(normal=[[('max_pool_3x3', 1), ('avg_pool_3x3', 0)], [('max_pool_3x3', 1), ('sep_conv_5x5', 2)], [('skip_connect', 2), ('max_pool_3x3', 3)], [('max_pool_3x3', 3), ('sep_conv_3x3', 0)]], normal_concat=range(2, 6), reduce=[[('sep_conv_5x5', 1), ('max_pool_3x3', 0)], [('max_pool_3x3', 1), ('max_pool_3x3', 2)], [('sep_conv_5x5', 1), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 0), ('avg_pool_3x3', 1)]], reduce_concat=range(2, 6))
 # BPE models
+dynamic_SNG_V3 = Genotype(normal=[[('sep_conv_5x5', 0), ('sep_conv_5x5', 1)], [('max_pool_3x3', 0), ('skip_connect', 1)], [('sep_conv_3x3', 2), ('sep_conv_3x3', 1)], [('skip_connect', 4), ('sep_conv_5x5', 3)]], normal_concat=range(2, 6), reduce=[[('sep_conv_5x5', 1), ('dil_conv_3x3', 0)], [('skip_connect', 2), ('avg_pool_3x3', 0)], [('avg_pool_3x3', 1), ('dil_conv_5x5', 2)], [('sep_conv_3x3', 3), ('dil_conv_5x5', 2)]], reduce_concat=range(2, 6))
+
 BPE_models = {
     'EA_BPE1': "Genotype(normal=[[('avg_pool_3x3', 0), ('skip_connect', 1)], [('skip_connect', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('dil_conv_5x5', 1)], [('sep_conv_3x3', 0), ('sep_conv_5x5', 2)]], normal_concat=range(2, 6), reduce=[[('max_pool_3x3', 0), ('sep_conv_3x3', 1)], [('sep_conv_5x5', 0), ('sep_conv_5x5', 2)], [('sep_conv_3x3', 0), ('skip_connect', 2)], [('max_pool_3x3', 1), ('skip_connect', 2)]], reduce_concat=range(2, 6))",
 
@@ -159,7 +161,6 @@ BPE_models = {
     'RS_BPE2': "Genotype(normal=[[('skip_connect', 1), ('sep_conv_3x3', 0)], [('avg_pool_3x3', 2), ('skip_connect', 0)], [('sep_conv_3x3', 1), ('avg_pool_3x3', 3)], [('avg_pool_3x3', 0), ('dil_conv_3x3', 2)]], normal_concat=range(2, 6), reduce=[[('skip_connect', 1), ('dil_conv_3x3', 0)], [('max_pool_3x3', 1), ('dil_conv_3x3', 0)], [('dil_conv_5x5', 3), ('max_pool_3x3', 0)], [('skip_connect', 3), ('dil_conv_3x3', 2)]], reduce_concat=range(2, 6))"
 }
 
-
 DARTS_NAS_model_dict = {'MDENAS': MDENAS,
                         'DDPNAS_V1': DDPNAS_1,
                         'DDPNAS_V2': DDPNAS_2,
@@ -167,6 +168,7 @@ DARTS_NAS_model_dict = {'MDENAS': MDENAS,
                         'DDPNAS_V3_constraint_4': DDPNAS_V3_constraint_4,
                         'DARTS_V1': DARTS_V1,
                         'DARTS_V2': DARTS_V2,
+                        'dynamic_SNG_V3': dynamic_SNG_V3,
                         'EA_BPE1': from_str(BPE_models['EA_BPE1']),
                         'EA_BPE2': from_str(BPE_models['EA_BPE2']),
                         'RL_BPE1': from_str(BPE_models['RL_BPE1']),

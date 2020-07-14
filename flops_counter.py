@@ -44,7 +44,7 @@ register_hooks = {
 def profile(model, input_size, custom_ops=None):
     handler_collection = []
     custom_ops = {} if custom_ops is None else custom_ops
-    
+
     def add_hooks(m_):
         if len(list(m_.children())) > 0:
             return
@@ -86,6 +86,8 @@ def profile(model, input_size, custom_ops=None):
     for m in model.modules():
         if len(list(m.children())) > 0:  # skip for non-leaf module
             continue
+        print(m)
+        print(m.total_ops)
         total_ops += m.total_ops
         total_params += m.total_params
 
@@ -96,4 +98,4 @@ def profile(model, input_size, custom_ops=None):
     for handler in handler_collection:
         handler.remove()
 
-    return float(total_ops) / 1000. / 1000., float(total_params) / 1024. / 1024.
+    return float(total_ops), float(total_params)
