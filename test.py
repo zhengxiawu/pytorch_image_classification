@@ -133,7 +133,7 @@ device = torch.device("cuda")
 
 
 def main():
-    print("Logger is set - evaluate start")
+    print("evaluate start")
 
     # set default gpu device id
     # torch.cuda.set_device(config.gpus[0])
