@@ -1,24 +1,27 @@
 ## Requirements
-- Pytorch 1.0.1.post2
-- Python 3.6+
-- DALI
 
-## Usuage
+* Pytorch 1.0.1.post2
+* Python 3.6+
+* DALI
+
+## Train
 
 Step1: Go into your project path
 
-```bash
+``` bash
 cd /userhome/project/pytorch_image_classification; 
 ```
 
 Step2: Move data to memory
 
-```bash
+``` bash
 ./script/data_to_memory.sh cifar10
 ./script/data_to_memory.sh imagenet
 ```
+
 Step3: Start training
-```bash
+
+``` bash
 # Training with cifar10 DALI on different neural networks
 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --model_method manual --model_name MobileNetV2 --data_loader_type dali
@@ -40,13 +43,11 @@ python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type dali --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 36 --layers 20 --epochs 600 --model_method darts_NAS --model_name DARTS_V1
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type dali --drop_path_prob 0.2 --aux_weight 0.4 --init_channels 36 --layers 20 --epochs 600 --model_method darts_NAS --model_name DARTS_V2
 
-
 # Training with cifar10 Torch on different neural networks for high performance 
 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name MobileNetV2 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name MobileNetV3Large 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method manual --model_name Resnet18 
-
 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name proxyless_gpu 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --model_method proxyless_NAS --model_name proxyless_cpu 
@@ -61,7 +62,6 @@ python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V2
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V1
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 600 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DARTS_V2
-
 
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name MDENAS
 python train.py --dataset cifar10 --data_path /userhome/temp_data/cifar10 --data_loader_type torch --auto_augmentation --cutout_length 16 --epochs 1800 --init_channels 44 --batch_size 96 --drop_path_prob 0.2 --aux_weight 0.4 --model_method darts_NAS --model_name DDPNAS_V1 
@@ -80,7 +80,7 @@ python train.py --dataset imagenet --data_path /userhome/temp_data/ImageNet --da
 
 Train with Timm and apex
 
-```bash
+``` bash
 python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method mual --model_name MobileNetV3Large --sched step --epochs 450 --decay-epochs 2.4 --decay-rate .97 --opt rmsproptf --opt-eps .001 -j 8 --warmup-lr 1e-6 --weight-decay 1e-5 --drop 0.2 --drop-connect 0.2 --model-ema --model-ema-decay 0.9999 --aa rand-m9-mstd0.5 --remode pixel --reprob 0.2 --amp --lr .016
 ```
 
@@ -89,6 +89,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 ### ImageNet
 
 #### train.py 
+
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
 |:----|:----:|:----:|:----:|:----:|:----:|
 | MobileNetV2  | 150 | 0.0  | 0.1 |300.774 |71.67|
@@ -127,6 +128,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | MobileNetV3  | 250 | 0.2  | 0.1 |216.590 |75.41|
 | MobileNetV3  | 200 | 0.2  | 0.1 |216.590 |75.052|
 | MobileNetV3  | 150 | 0.2  | 0.1 |216.590 |74.426|
+
 ### CIFAR-10
 
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
@@ -148,6 +150,7 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 ## Experiments
 
 ### CIFAR-10
+
 |Model|Epoch|Dropout|LabelSmooth|FLOPs|Result|
 |:----|:----:|:----:|:----:|:----:|:----:|
 | ofa__dataset_cifar10_width_multi_1.2_epochs_200_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:100  | 300 | 0.0  | 0.1 | 4.162  |79.74|
@@ -177,3 +180,25 @@ python timm_train.py --data /userhome/temp_data/ImageNet -b 256 --model_method m
 | EfficientNet_b0 | 300 | 0.0 | 0.1 | 8.475 | 80.93 |
 | FBNet-C | 300 | 0.0 | 0.1 | 7.836 | 79.3 |
 | proxyless__dataset_imagenet_width_multi_1.3_epochs_1000_data_split_10_warm_up_epochs_0_lr_0.01_pruning_step_3:600 | 300 | 0.0 | 0.1 | 12.129 | 84.48 |
+
+## Test
+
+### MIGONAS_400
+
+Download the model at [here](https://pan.baidu.com/s/1xlgqgq1X2GjiOEN-8OvvmQ) and the password is ur0t
+
+Test the model on ImageNet by
+
+``` python
+ python test.py --structure_path models/model_zoo/MIGONAS_400.json --pretrained path_to_the_model_file
+```
+
+### MIGONAS_600
+
+Download the model at [here](https://pan.baidu.com/s/14Z2fbqooSlBavzkv20ySfg) and the password is v8rh
+
+Test the model on ImageNet by
+
+``` python
+ python test.py --structure_path models/model_zoo/MIGONAS_600.json --pretrained path_to_the_model_file
+```
