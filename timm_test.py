@@ -176,6 +176,7 @@ def validate(args):
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output.data, target, topk=(1, 5))
+            import pdb; pdb.set_trace()
             losses.update(loss.item(), input.size(0))
             top1.update(acc1.item(), input.size(0))
             top5.update(acc5.item(), input.size(0))
