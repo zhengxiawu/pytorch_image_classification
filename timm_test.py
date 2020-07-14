@@ -89,7 +89,7 @@ def validate(args):
     # create model
     if args.model == 'migo400':
         model = my_specialized(num_classes=args.num_classes, net_config='models/model_zoo/MIGONAS_400.json',
-                               dropout_rate=args.drop)
+                               dropout_rate=0)
     ckpt = torch.load(args.pretrained)
     # for k in model:
     #     print(k)
