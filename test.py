@@ -164,7 +164,7 @@ def main():
                                                    batch_size=config.batch_size,
                                                    shuffle=False,
                                                    num_workers=config.workers,
-                                                   pin_memory=True)
+                                                   pin_memory=False)
     elif config.data_loader_type == 'dali':
         input_size, input_channels, n_classes, train_data, valid_data = get_data.get_data_dali(
             config.dataset, config.data_path, batch_size=config.batch_size, num_threads=config.workers)
@@ -208,6 +208,7 @@ def main():
     # return
     # set bn
     # model.set_bn_param(config.bn_momentum, config.bn_eps)
+    import pdb; pdb.set_trace()
     model.load_state_dict(ckpt['state_dict_ema'])
     # model init
     # model.init_model(model_init=config.model_init)
