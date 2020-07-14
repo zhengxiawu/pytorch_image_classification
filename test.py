@@ -42,7 +42,7 @@ class EvaluateConfig(BaseConfig):
                             default='bn', choices=['None', 'bn', 'bn#bias'])
 
         parser.add_argument('--print_freq', type=int,
-                            default=200, help='print frequency')
+                            default=1, help='print frequency')
         parser.add_argument('--gpus', default='0', help='gpu device ids separated by comma. '
                             '`all` indicates use all gpus.')
         # parser.add_argument('--epochs', type=int, default=150, help='# of training epochs')
