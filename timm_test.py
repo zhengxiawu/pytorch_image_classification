@@ -151,7 +151,6 @@ def validate(args):
         crop_pct=crop_pct,
         pin_memory=args.pin_mem,
         tf_preprocessing=args.tf_preprocessing)
-    import pdb; pdb.set_trace()
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
