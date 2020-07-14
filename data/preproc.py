@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torchvision.transforms as transforms
-from data.autoaugment import CIFAR10Policy,SVHNPolicy,ImageNetPolicy
+from data.autoaugment import CIFAR10Policy, SVHNPolicy, ImageNetPolicy
 
 
 class Cutout(object):
@@ -45,13 +45,15 @@ def data_transforms(dataset, cutout_length, auto_augmentation):
         MEAN = [0.13066051707548254]
         STD = [0.30810780244715075]
         transf = [
-            transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=0.1)
+            transforms.RandomAffine(degrees=15, translate=(
+                0.1, 0.1), scale=(0.9, 1.1), shear=0.1)
         ]
     elif dataset == 'fashionmnist':
         MEAN = [0.28604063146254594]
         STD = [0.35302426207299326]
         transf = [
-            transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=0.1),
+            transforms.RandomAffine(degrees=15, translate=(
+                0.1, 0.1), scale=(0.9, 1.1), shear=0.1),
             transforms.RandomVerticalFlip()
         ]
     elif 'imagenet' in dataset:
@@ -73,10 +75,10 @@ def data_transforms(dataset, cutout_length, auto_augmentation):
             transf.append(ImageNetPolicy())
         else:
             transf.append(transforms.ColorJitter(
-                    brightness=0.4,
-                    contrast=0.4,
-                    saturation=0.4,
-                    hue=0.2))
+                brightness=0.4,
+                contrast=0.4,
+                saturation=0.4,
+                hue=0.2))
     else:
         raise ValueError('not expected dataset = {}'.format(dataset))
 
