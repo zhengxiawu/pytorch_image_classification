@@ -208,7 +208,9 @@ def main():
     # return
     # set bn
     # model.set_bn_param(config.bn_momentum, config.bn_eps)
-    import pdb; pdb.set_trace()
+    for _key in list(ckpt['state_dict_ema'].keys()):
+        if 'total_ops' in _key or 'total_params' in _key:
+            del ckpt['state_dict_ema'][_key]
     model.load_state_dict(ckpt['state_dict_ema'])
     # model init
     # model.init_model(model_init=config.model_init)
