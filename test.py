@@ -52,7 +52,7 @@ class EvaluateConfig(BaseConfig):
         parser.add_argument('--seed', type=int, default=2, help='random seed')
 
         parser.add_argument('--workers', type=int,
-                            default=24, help='# of workers')
+                            default=4, help='# of workers')
         parser.add_argument('--aux_weight', type=float,
                             default=0, help='auxiliary loss weight')
         parser.add_argument('--cutout_length', type=int,
