@@ -160,8 +160,7 @@ def validate(args):
     model.eval()
     with torch.no_grad():
         # warmup, reduce variability of first batch time, especially for comparing torchscript vs non
-        input = torch.randn((args.batch_size,) +
-                            data_config['input_size']).cuda()
+        input = torch.randn((args.batch_size,) + data_config['input_size']).cuda()
         model(input)
         end = time.time()
         for i, (input, target) in enumerate(loader):
