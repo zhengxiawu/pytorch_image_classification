@@ -3,7 +3,6 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from tensorboardX import SummaryWriter
 from config import BaseConfig, get_parser, parse_gpus
 import models.darts.genotypes as gt
 import time
