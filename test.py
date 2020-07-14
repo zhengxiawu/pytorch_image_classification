@@ -13,7 +13,7 @@ from models import get_model
 from data import get_data
 import flops_counter
 
-project_path = "/userhome/github_project/pytorch_image_classification"
+project_path = "/userhome/project/pytorch_image_classification"
 
 
 class EvaluateConfig(BaseConfig):
@@ -22,19 +22,19 @@ class EvaluateConfig(BaseConfig):
         parser.add_argument('--name', default='')
         parser.add_argument('--dataset', default='ImageNet',
                             help='imagenet / ImageNet56 / ImageNet112 / cifar10')
-        parser.add_argument('--data_path', default='/userhome/temp_data/ImageNet',
+        parser.add_argument('--data_path', default='/gdata/ImageNet2012',
                             help='data path')
         parser.add_argument('--data_loader_type',
                             default='torch', help='torch/dali')
         parser.add_argument('--grad_clip', type=float,
                             default=0, help='gradient clipping for weights')
-        parser.add_argument('--model_method', default='proxyless_NAS',)
-        parser.add_argument('--model_name', default='proxyless_gpu', )
+        parser.add_argument('--model_method', default='my_model_collection',)
+        parser.add_argument('--model_name', default='my_model_collection', )
         parser.add_argument('--model_init', type=str,
                             default='he_fout', choices=['he_fin', 'he_fout'])
 
         parser.add_argument('--batch_size', type=int,
-                            default=64, help='batch size')
+                            default=256, help='batch size')
         # parser.add_argument('--lr', type=float, default=0.05, help='lr for weights')
         # parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
         # parser.add_argument('--weight_decay', type=float, default=4e-5, help='weight decay')
@@ -132,16 +132,9 @@ config = EvaluateConfig()
 
 device = torch.device("cuda")
 
-# Record tensorboard
-#
-# logger = utils.get_logger(os.path.join(config.path, "logger.log"))
-logger = utils.get_logger("./logger.log")
-
-config.print_params(logger.info)
-
 
 def main():
-    logger.info("Logger is set - evaluate start")
+    print("Logger is set - evaluate start")
 
     # set default gpu device id
     # torch.cuda.set_device(config.gpus[0])
@@ -210,7 +203,7 @@ def main():
         model = model_fun(num_classes=n_classes, dropout_rate=0)
     # load model
     ckpt = torch.load(config.pretrained)
-    logger.info(ckpt.keys())
+    print(ckpt.keys())
     # for k in model:
     #     print(k)
     # return
@@ -223,11 +216,11 @@ def main():
     # model size
     total_ops, total_params = flops_counter.profile(
         model, [1, input_channels, input_size, input_size])
-    logger.info("Model size = {:.3f} MB".format(total_params))
-    logger.info("Model FLOPS with input {} = {:.3f} M".format(str([1, input_channels, input_size, input_size]),
-                                                              total_ops))
+    print("Model size = {:.3f} MB".format(total_params))
+    print("Model FLOPS with input {} = {:.3f} M".format(str([1, input_channels, input_size, input_size]),
+                                                        total_ops))
     total_ops, total_params = flops_counter.profile(model, [1, 3, 224, 224])
-    logger.info(
+    print(
         "Model FLOPS with input [1,3,224,224] {:.3f} M".format(total_ops))
 
     model = nn.DataParallel(model).to(device)
@@ -241,7 +234,7 @@ def main():
 
     best_top1 = validate(valid_loader, model, criterion, 0, 0)
 
-    logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
+    print("Final best Prec@1 = {:.4%}".format(best_top1))
 
 
 @torch.no_grad()
@@ -275,7 +268,7 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
             top5.update(prec5.item(), N)
 
             if step % config.print_freq == 0 or step == _size-1:
-                logger.info(
+                print(
                     "Valid: Step {:03d}/{:03d} Loss {losses.avg:.3f} "
                     "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
                         step, _size-1, losses=losses,
@@ -287,7 +280,7 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
     if not isinstance(valid_loader, torch.utils.data.DataLoader):
         valid_loader.reset()
 
-    logger.info("Valid: Final Prec@1 {:.4%}".format(top1.avg))
+    print("Valid: Final Prec@1 {:.4%}".format(top1.avg))
 
     return top1.avg
 
