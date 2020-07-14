@@ -55,7 +55,7 @@ parser.add_argument('--num-classes', type=int, default=1000,
                     help='Number classes in dataset')
 parser.add_argument('--class-map', default='', type=str, metavar='FILENAME',
                     help='path to class to idx mapping file (default: "")')
-parser.add_argument('--log-freq', default=10, type=int,
+parser.add_argument('--log-freq', default=1, type=int,
                     metavar='N', help='batch logging frequency (default: 10)')
 parser.add_argument('--checkpoint', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
